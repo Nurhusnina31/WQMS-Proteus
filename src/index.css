@@ -1,0 +1,65 @@
+
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap");
+@import "tailwindcss";
+
+/* Ocean Blue Theme - Tailwind CSS v4 */
+@theme {
+  /* Typography */
+  --font-sans: "Inter", ui-sans-serif, system-ui,
+    "Segoe UI", Roboto, "Helvetica Neue", Arial,
+    "Noto Sans", sans-serif;
+
+  /* Primary Colours */
+  --color-brand: #0369A1;
+  --color-brand-hover: #075985;
+  --color-brand-light: #D9EEFC;
+
+  /* Background Colours */
+  --color-page: #F6FAFD;
+  --color-surface: #FFFFFF;
+  --color-sidebar: #EFF8FF;
+
+  /* Text Colours */
+  --color-ink: #0F2942;
+  --color-muted: #63839A;
+
+  /* Border Colour */
+  --color-line: #D1E5F2;
+
+  /* Border Radius */
+  --radius-xl: 1rem;
+}
+
+/* Global Base Styling */
+@layer base {
+  html {
+    @apply font-sans antialiased tabular-nums;
+  }
+
+  body {
+    @apply bg-page text-ink;
+  }
+}
+
+/* Notification Bell Animation */
+@keyframes bell-ring {
+  0%,
+  100% {
+    transform: rotate(0);
+  }
+  15% {
+    transform: rotate(14deg);
+  }
+  30% {
+    transform: rotate(-12deg);
+  }
+  45% {
+    transform: rotate(9deg);
+  }
+  60% {
+    transform: rotate(-6deg);
+  }
+  75% {
+    transform: rotate(3deg);
+  }
+}

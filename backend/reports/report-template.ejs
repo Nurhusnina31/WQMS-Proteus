@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Environmental Monitoring Report</title>
+    <style>
+      /* Landscape page orientation for PDF */
+      @page {
+        size: A4 landscape;
+        margin: 1.5cm;
+      }
+
+      body {
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        color: #1f2937;
+        margin: 0;
+        padding: 1rem;
+        background-color: #ffffff;
+      }
+
+      .header {
+        border-bottom: 3px solid #0f766e;
+        padding-bottom: 0.75rem;
+        margin-bottom: 1.5rem;
+      }
+
+      .title {
+        font-size: 1.75rem;
+        font-weight: 700;
+        color: #0f766e;
+      }
+
+      .subtitle {
+        font-size: 0.9rem;
+        margin-top: 0.5rem;
+        color: #6b7280;
+      }
+
+      .section {
+        margin-bottom: 1.5rem;
+      }
+
+      .section-title {
+        font-size: 1.1rem;
+        font-weight: 600;
+        border-left: 4px solid #0f766e;
+        padding-left: 0.75rem;
+        margin-bottom: 0.75rem;
+      }
+
+      .table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 0.7rem; /* Reduced from 0.95rem */
+      }
+
+      .table thead {
+        background-color: #f1f5f9;
+        color: #111827;
+      }
+
+      .table th,
+      .table td {
+        border: 1px solid #e5e7eb;
+        padding: 0.3rem 0.4rem; /* Reduced from 0.6rem 1rem */
+        text-align: left;
+        white-space: nowrap; /* Prevent text wrapping */
+      }
+
+      .table th {
+        font-size: 0.65rem;
+        font-weight: 600;
+      }
+
+      .summary {
+        background-color: #f9fafb;
+        padding: 0.75rem;
+        border-left: 4px solid #0f766e;
+        margin-top: 1rem;
+        font-size: 0.85rem;
+      }
+
+      .availability-high {
+        color: #15803d; /* Green for ≥90% */
+        font-weight: 600;
+      }
+
+      .availability-medium {
+        color: #ca8a04; /* Yellow for 70-89% */
+        font-weight: 600;
+      }
+
+      .availability-low {
+        color: #dc2626; /* Red for <70% */
+        font-weight: 600;
+      }
+
+      .footer {
+        font-size: 0.7rem;
+        color: #6b7280;
+        border-top: 1px solid #e5e7eb;
+        padding-top: 0.75rem;
+        text-align: center;
+        margin-top: 1.5rem;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="header">
+      <div class="title">Water Quality Monitoring Report</div>
+      <div class="subtitle">
+        Generated for <strong><%= deviceId %></strong> | Period: <%= dateRange
+        %>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">Report Metadata</div>
+      <p><strong>Generated On:</strong> <%= generatedOn %></p>
+      <p><strong>Location:</strong> <%= location %></p>
+      <p><strong>Interval:</strong> <%= intervalLabel %></p>
+      <% if (summary.maintenanceExcluded > 0) { %>
+      <p><strong>Maintenance Excluded:</strong> <%= summary.maintenanceExcluded %> bucket(s)</p>
+      <% } %>
+    </div>
+
+    <div class="section">
+      <div class="section-title">Sensor Data</div>
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Time</th>
+            <% parameters.forEach(param => { %>
+            <th><%= param.label %> (<%= param.unit %>)</th>
+            <% }) %>
+          </tr>
+        </thead>
+        <tbody>
+          <% data.forEach(row => { %>
+          <tr>
+            <td><%= row.date %></td>
+            <td><%= row.time %></td>
+            <% parameters.forEach(param => { %>
+            <td><%= row[param.key] %></td>
+            <% }) %>
+          </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Data Availability Section -->
+    <div class="section">
+      <div class="section-title">Data Availability</div>
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Parameter</th>
+            <th>Availability (%)</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% parameters.forEach(param => { 
+            const availability = (summary.availability && summary.availability[param.key]) || 0;
+            let statusClass = 'availability-low';
+            let statusText = 'Low';
+            if (availability >= 90) {
+              statusClass = 'availability-high';
+              statusText = 'Excellent';
+            } else if (availability >= 70) {
+              statusClass = 'availability-medium';
+              statusText = 'Good';
+            }
+          %>
+          <tr>
+            <td><%= param.label %></td>
+            <td class="<%= statusClass %>"><%= availability.toFixed(1) %>%</td>
+            <td class="<%= statusClass %>"><%= statusText %></td>
+          </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Data Counts Section: per-parameter point counts at hourly granularity -->
+    <% if (summary.dataCountsRows && summary.dataCountsRows.length > 0) { %>
+    <div class="section">
+      <div class="section-title">Data Counts</div>
+      <table class="table">
+        <thead>
+          <tr>
+            <th>No</th>
+            <th>Parameter</th>
+            <th>Unit</th>
+            <th>Total Data</th>
+            <th>Available Data</th>
+            <th>Validated Data</th>
+            <th>Missing Data</th>
+            <th>Calibration Data</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% summary.dataCountsRows.forEach(row => { %>
+          <tr>
+            <td><%= row.no %></td>
+            <td><%= row.label %></td>
+            <td><%= row.unit %></td>
+            <td><%= row.total %></td>
+            <td><%= row.available %></td>
+            <td><%= row.validated %></td>
+            <td><%= row.missing %></td>
+            <td><%= row.calibration %></td>
+          </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </div>
+    <% } %>
+
+    <div class="section">
+      <div class="section-title">Summary</div>
+      <div class="summary">
+        <p><strong>pH Average:</strong> <%= summary.avgPh %> <%= summary.units.ph %></p>
+        <p><strong>Dissolved Oxygen Average:</strong> <%= summary.avgDo %> <%= summary.units.do %></p>
+        <p><strong>NH₃-N Average:</strong> <%= summary.avgNh3n %> <%= summary.units.nh3n %></p>
+        <p><strong>COD Average:</strong> <%= summary.avgCod %> <%= summary.units.cod %></p>
+        <p><strong>BOD Average:</strong> <%= summary.avgBod %> <%= summary.units.bod %></p>
+        <p><strong>TSS Average:</strong> <%= summary.avgTss %> <%= summary.units.tss %></p>
+        <p><strong>Depth Average:</strong> <%= summary.avgDepth %> <%= summary.units.depth %></p>
+      </div>
+    </div>
+
+    <div class="footer">
+      This report was generated automatically by the AquaMind Water Quality Monitoring System
+      Dashboard.
+    </div>
+  </body>
+</html>

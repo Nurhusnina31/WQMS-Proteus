@@ -1,0 +1,117 @@
+import { MapContainer, TileLayer, Marker, Circle } from "react-leaflet";
+import L from "leaflet";
+import "leaflet-defaulticon-compatibility";
+import "leaflet/dist/leaflet.css";
+import { MapPin } from "lucide-react";
+import { formatCoordinate } from "../../utils/numberFormat";
+
+interface StationMapProps {
+  stationName?: string;
+  location?: string;
+  latitude?: number;
+  longitude?: number;
+  status?: string;
+}
+
+// Green marker icon
+const greenIcon = new L.Icon({
+  iconUrl:
+    "https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-green.png",
+  shadowUrl:
+    "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.3.1/images/marker-shadow.png",
+  iconSize: [25, 41],
+  iconAnchor: [12, 41],
+  popupAnchor: [1, -34],
+  shadowSize: [41, 41],
+});
+
+export default function StationMap({
+  stationName = "AquaMind Water Quality Monitoring Station",
+  location = "Pengerang",
+  latitude = 3.004547195618763,
+  longitude = 101.70881563208111,
+  status = "active",
+}: StationMapProps) {
+  const isActive = status.toLowerCase() === "active";
+  const statusColor = isActive ? "text-green-600" : "text-red-600";
+  const statusBg = isActive ? "bg-green-400" : "bg-red-400";
+
+  return (
+    <div className="h-full w-full flex flex-col">
+      
+    {/* Station Info Header */}
+    <div className="mb-3 flex items-start gap-3 rounded-xl border border-line bg-[#F7FBFE] p-3">
+
+      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[#D9EEFC]">
+        <MapPin className="h-5 w-5 text-brand" />
+      </div>
+
+      <div className="min-w-0">
+        <div className="text-sm font-semibold text-ink">
+          {stationName}
+        </div>
+
+        <div className="mt-1 text-xs leading-relaxed text-muted">
+          {location}, Malaysia
+          <span className="block">
+            {formatCoordinate(latitude)}°N,{" "}
+            {formatCoordinate(longitude)}°E
+          </span>
+        </div>
+      </div>
+    </div>
+
+
+      {/* Map Container */}
+      <div className="relative z-0 min-h-0 flex-1 overflow-hidden rounded-xl border border-line">
+        <MapContainer
+          center={[latitude, longitude]}
+          zoom={13}
+          scrollWheelZoom={true}
+          zoomControl={true}
+          dragging={true}
+          className="w-full h-full"
+          attributionControl={false}
+          key={`${latitude}-${longitude}`} // Force re-render when coords change
+        >
+          <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
+
+          {/* Teal circle around station */}
+          <Circle
+            center={[latitude, longitude]}
+            radius={85}
+            pathOptions={{
+              fillColor: "#0369A1",
+              fillOpacity: 0.12,
+              stroke: true,
+              color: "#0369A1",
+              weight: 1,
+            }}
+          />
+
+          {/* Station marker */}
+          <Marker position={[latitude, longitude]} icon={greenIcon} />
+        </MapContainer>
+      </div>
+
+      {/* Location Details */}
+      <div className="mt-3 grid grid-cols-1 gap-3 text-xs sm:grid-cols-2">
+        <div className="rounded-xl border border-line bg-[#F7FBFE] p-3">
+          <div className="text-muted">Region</div>
+          <div className="text-ink font-medium">{location}, Malaysia</div>
+        </div>
+        <div className="rounded-xl border border-line bg-[#F7FBFE] p-3">
+          <div className="text-muted">Status</div>
+          <div className={`font-medium flex items-center gap-1 ${statusColor}`}>
+            <span
+              className={`w-2 h-2 rounded-full ${statusBg} ${
+                isActive ? "animate-pulse" : ""
+              }`}
+            />
+            {status.charAt(0).toUpperCase() + status.slice(1)}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}

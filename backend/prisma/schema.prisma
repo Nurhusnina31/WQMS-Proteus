@@ -1,0 +1,481 @@
+// AquaMind Water Quality Monitoring System - Database Schema
+// Tables: users, roles, user_roles, devices, telemetry_raw, telemetry_processed,
+//         validation_status, approval_requests, audit_logs, notifications, reports,
+//         maintenance_log, alert_thresholds, alert_history, notification_preferences,
+//         revoked_tokens, custom_displays
+
+generator client {
+  provider      = "prisma-client-js"
+  binaryTargets = ["native", "debian-openssl-3.0.x"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================================================
+// 1. USERS TABLE
+// ============================================================================
+model User {
+  id            String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  email         String   @unique @db.VarChar(255)
+  passwordHash  String   @map("password_hash") @db.VarChar(255)
+  fullName      String   @map("full_name") @db.VarChar(255)
+  isActive      Boolean  @default(true) @map("is_active")
+  loginAttempts Int      @default(0) @map("login_attempts")
+  lastLogin     DateTime? @map("last_login") @db.Timestamptz
+  lockUntil     DateTime? @map("lock_until") @db.Timestamptz
+  createdAt     DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt     DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz
+
+  // Relations
+  userRole                  UserRole?
+  validationStatus          ValidationStatus[]
+  approvals                ApprovalRequest[] @relation("ApprovalRequester")
+  adminApprovals           ApprovalRequest[] @relation("ApprovalAdmin")
+  auditLogs                AuditLog[]
+  notifications            Notification[]
+  reports                  Report[]
+  createdThresholds        AlertThreshold[] @relation("ThresholdCreator")
+  acknowledgedAlerts       AlertHistory[] @relation("AlertAcknowledger")
+  notificationPreference   UserNotificationPreference?
+  customDisplays           CustomDisplay[]
+  calibrations             SensorCalibration[] @relation("CalibrationUpdater")
+
+  @@index([isActive], name: "idx_users_active")
+  @@map("users")
+}
+
+// ============================================================================
+// 2. ROLES TABLE
+// ============================================================================
+model Role {
+  roleId      String   @id @map("role_id") @db.VarChar(50)
+  roleName    String   @map("role_name") @db.VarChar(100)
+  description String?  @db.Text
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  // Relations
+  userRoles UserRole[]
+
+  @@map("roles")
+}
+
+// ============================================================================
+// 3. USER_ROLES TABLE
+// ============================================================================
+model UserRole {
+  userId    String   @id @map("user_id") @db.Uuid
+  roleId    String   @map("role_id") @db.VarChar(50)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role Role @relation(fields: [roleId], references: [roleId])
+
+  @@index([roleId], name: "idx_user_roles_role")
+  @@map("user_roles")
+}
+
+// ============================================================================
+// 4. DEVICES TABLE
+// ============================================================================
+model Device {
+  id             String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  deviceCode     String   @unique @map("device_code") @db.VarChar(50)
+  mqttIdentifier String?  @unique @map("mqtt_identifier") @db.VarChar(255)
+  name           String   @db.VarChar(255)
+  location       String   @db.VarChar(255)
+  latitude   Decimal? @db.Decimal(10, 8)
+  longitude  Decimal? @db.Decimal(11, 8)
+  status     String   @default("active") @db.VarChar(50)
+  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt  DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz
+
+  // Relations
+  telemetryProcessed  TelemetryProcessed[]
+  validationStatuses  ValidationStatus[]
+  approvalRequests    ApprovalRequest[]
+  maintenanceLogs     MaintenanceLog[]
+  alertThresholds     AlertThreshold[]
+  alertHistory        AlertHistory[]
+  customDisplays      CustomDisplay[]
+  calibrations        SensorCalibration[]
+
+  @@map("devices")
+}
+
+// ============================================================================
+// 5. TELEMETRY_PROCESSED TABLE (TimescaleDB Hypertable)
+// ============================================================================
+model TelemetryProcessed {
+  recordId        String   @default(dbgenerated("gen_random_uuid()")) @map("record_id") @db.Uuid
+  deviceId        String   @map("device_id") @db.Uuid
+  observedAt      DateTime @map("observed_at") @db.Timestamptz
+  
+  // Water Quality Parameters (Malaysia NWQS)
+  phValue         Decimal? @map("ph_value") @db.Decimal(5, 3)       // pH (dimensionless, 0–14)
+  doValue         Decimal? @map("do_value") @db.Decimal(6, 3)       // Dissolved Oxygen (mg/L)
+  nh3nValue       Decimal? @map("nh3_n_value") @db.Decimal(8, 4)    // Ammonia-Nitrogen (mg/L)
+  codValue        Decimal? @map("cod_value") @db.Decimal(8, 3)      // Chemical Oxygen Demand (mg/L)
+  bodValue        Decimal? @map("bod_value") @db.Decimal(8, 3)      // Biochemical Oxygen Demand (mg/L)
+  tssValue        Decimal? @map("tss_value") @db.Decimal(8, 3)      // Total Suspended Solids (mg/L)
+  tempValue       Decimal? @map("temp_value") @db.Decimal(5, 2)     // Water Temperature (°C)
+  pressureValue   Decimal? @map("pressure_value") @db.Decimal(7, 2) // Pressure (kPa)
+  depthValue      Decimal? @map("depth_value") @db.Decimal(7, 3)    // Water Depth (m)
+  
+  // Metadata
+  dataQuality     String   @default("pending") @map("data_quality") @db.VarChar(20)
+  processingFlags Json?    @map("processing_flags") @db.JsonB
+  rawValues       Json?    @map("raw_values") @db.JsonB // pre-calibration readings (audit)
+  
+  createdAt       DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt       DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz
+
+  // Relations
+  device              Device             @relation(fields: [deviceId], references: [id])
+  validationStatuses  ValidationStatus[]
+  alertHistory        AlertHistory[]
+  approvalRequests    ApprovalRequest[]
+
+  @@id([observedAt, deviceId, recordId])
+  @@unique([recordId], name: "idx_telemetry_processed_record_id")
+  @@index([deviceId, observedAt(sort: Desc)], name: "idx_telemetry_processed_device")
+  @@index([observedAt(sort: Desc)], name: "idx_telemetry_processed_time")
+  @@index([dataQuality, observedAt(sort: Desc)], name: "idx_telemetry_processed_quality")
+  @@map("telemetry_processed")
+}
+
+// ============================================================================
+// 7. VALIDATION_STATUS TABLE
+// ============================================================================
+model ValidationStatus {
+  id                    String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  recordId              String   @map("record_id") @db.Uuid
+  deviceId              String   @map("device_id") @db.Uuid
+  observedAt            DateTime @map("observed_at") @db.Timestamptz
+  parameter             String   @db.VarChar(50)
+  status                String   @db.VarChar(50)
+  validatedByHuman      Boolean  @default(false) @map("validated_by_human")
+  flaggedByHuman        Boolean  @default(false) @map("flagged_by_human")
+  pendingAdminApproval  Boolean  @default(false) @map("pending_admin_approval")
+  validatedBy           String?  @map("validated_by") @db.Uuid
+  validatedAt           DateTime? @map("validated_at") @db.Timestamptz
+  remarks               String?   @db.Text
+  createdAt             DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt             DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz
+
+  // Relations
+  telemetryProcessed TelemetryProcessed @relation(fields: [recordId], references: [recordId])
+  device            Device             @relation(fields: [deviceId], references: [id])
+  validator         User?              @relation(fields: [validatedBy], references: [id])
+
+  @@unique([recordId, parameter])
+  @@index([deviceId, observedAt(sort: Desc)], name: "idx_validation_device_time")
+  @@index([status], name: "idx_validation_status")
+  @@index([pendingAdminApproval], name: "idx_validation_pending")
+  @@index([recordId], name: "idx_validation_record")
+  @@map("validation_status")
+}
+
+// ============================================================================
+// 8. APPROVAL_REQUESTS TABLE
+// ============================================================================
+model ApprovalRequest {
+  approvalId      String   @id @default(dbgenerated("gen_random_uuid()")) @map("approval_id") @db.Uuid
+  stationId       String   @map("station_id") @db.Uuid
+  parameterCode   String   @map("parameter_code") @db.VarChar(50)
+  timeFrom        DateTime @map("time_from") @db.Timestamptz
+  timeTo          DateTime @map("time_to") @db.Timestamptz
+  recordId        String?  @map("record_id") @db.Uuid
+  approvalType    String?  @map("approval_type") @db.VarChar(50)
+  currentValue    Decimal? @map("current_value") @db.Decimal(10, 2)
+  newValue        Decimal? @map("new_value") @db.Decimal(10, 2)
+  previousValue   Decimal? @map("previous_value") @db.Decimal(10, 2)
+  flagType        String?  @map("flag_type") @db.VarChar(50)
+  validationType  String?  @map("validation_type") @db.VarChar(50)
+  validationMode  String?  @map("validation_mode") @db.VarChar(50)
+  qcReviewerId    String?  @map("qc_reviewer_id") @db.Uuid
+  qcReviewedAt    DateTime @default(now()) @map("qc_reviewed_at") @db.Timestamptz
+  qcRemarks       String?  @map("qc_remarks") @db.Text
+  adminStatus     String   @default("pending") @map("admin_status") @db.VarChar(50)
+  adminId         String?  @map("admin_id") @db.Uuid
+  adminDecidedAt  DateTime? @map("admin_decided_at") @db.Timestamptz
+  adminRemarks    String?  @map("admin_remarks") @db.Text
+  createdAt       DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt       DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz
+
+  // Relations
+  station          Device              @relation(fields: [stationId], references: [id])
+  telemetryRecord  TelemetryProcessed? @relation(fields: [recordId], references: [recordId])
+  qcReviewer       User?               @relation("ApprovalRequester", fields: [qcReviewerId], references: [id])
+  admin            User?               @relation("ApprovalAdmin", fields: [adminId], references: [id])
+  auditLogs        AuditLog[]
+
+  @@index([adminStatus], name: "idx_approval_status")
+  @@index([stationId, timeFrom(sort: Desc)], name: "idx_approval_station_time")
+  @@index([qcReviewerId], name: "idx_approval_qc_reviewer")
+  @@index([adminId], name: "idx_approval_admin")
+  @@index([recordId], name: "idx_approval_record")
+  @@index([timeFrom, timeTo], name: "idx_approval_time_range")
+  @@map("approval_requests")
+}
+
+// ============================================================================
+// 9. AUDIT_LOGS TABLE (Immutable)
+// ============================================================================
+model AuditLog {
+  id                     String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId                 String?  @map("user_id") @db.Uuid
+  userEmail              String   @map("user_email") @db.VarChar(255)
+  userRole               String   @map("user_role") @db.VarChar(50)
+  action                 String   @db.VarChar(100)
+  actionCategory         String   @map("action_category") @db.VarChar(50)
+  entityType             String   @map("entity_type") @db.VarChar(50)
+  entityId               String   @map("entity_id") @db.Uuid
+  oldValue               Json?    @map("old_value") @db.JsonB
+  newValue               Json?    @map("new_value") @db.JsonB
+  changesSummary         String?  @map("changes_summary") @db.Text
+  reason                 String   @db.Text
+  justificationCategory  String?  @map("justification_category") @db.VarChar(50)
+  approvalReference      String?  @map("approval_reference") @db.Uuid
+  ipAddress              String?  @map("ip_address") @db.Inet
+  userAgent              String?  @map("user_agent") @db.Text
+  requestId              String?  @map("request_id") @db.Uuid
+  createdAt              DateTime @default(now()) @map("created_at") @db.Timestamptz
+  retentionUntil         DateTime? @map("retention_until") @db.Timestamptz
+
+  // Relations
+  user              User?            @relation(fields: [userId], references: [id])
+  approvalRequest   ApprovalRequest? @relation(fields: [approvalReference], references: [approvalId])
+
+  @@index([userId, createdAt(sort: Desc)], name: "idx_audit_user")
+  @@index([entityType, entityId, createdAt(sort: Desc)], name: "idx_audit_entity")
+  @@index([createdAt(sort: Desc)], name: "idx_audit_timestamp")
+  @@index([action, createdAt(sort: Desc)], name: "idx_audit_action")
+  @@index([actionCategory, createdAt(sort: Desc)], name: "idx_audit_category")
+  @@index([approvalReference], name: "idx_audit_approval_ref")
+  @@map("audit_logs")
+}
+
+// ============================================================================
+// 10. NOTIFICATIONS TABLE
+// ============================================================================
+model Notification {
+  id                String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId            String   @map("user_id") @db.Uuid
+  type              String   @db.VarChar(50)
+  title             String   @db.VarChar(255)
+  message           String   @db.Text
+  relatedEntityType String?  @map("related_entity_type") @db.VarChar(50)
+  relatedEntityId   String?  @map("related_entity_id") @db.Uuid
+  severity          String?  @db.VarChar(20)
+  alertHistoryId    String?  @map("alert_history_id") @db.Uuid
+  isRead            Boolean  @default(false) @map("is_read")
+  readAt            DateTime? @map("read_at") @db.Timestamptz
+  createdAt         DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  // Relations
+  user         User          @relation(fields: [userId], references: [id])
+  alertHistory AlertHistory? @relation(fields: [alertHistoryId], references: [id])
+
+  @@index([userId, createdAt(sort: Desc)], name: "idx_notifications_user")
+  @@index([userId, isRead], name: "idx_notifications_unread")
+  @@map("notifications")
+}
+
+// ============================================================================
+// 11. REPORTS TABLE
+// ============================================================================
+model Report {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  reportType  String   @map("report_type") @db.VarChar(50)
+  title       String   @db.VarChar(255)
+  description String?  @db.Text
+  timeFrom    DateTime @map("time_from") @db.Timestamptz
+  timeTo      DateTime @map("time_to") @db.Timestamptz
+  deviceIds   String[] @map("device_ids") @db.Uuid
+  parameters  String[] @db.VarChar(50)
+  fileFormat  String   @map("file_format") @db.VarChar(10)
+  filePath    String   @map("file_path") @db.Text
+  fileName    String   @map("file_name") @db.VarChar(255)
+  fileSize    Int?     @map("file_size")
+  status      String   @default("completed") @db.VarChar(20)
+  errorMessage String? @map("error_message") @db.Text
+  createdBy   String   @map("created_by") @db.Uuid
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz
+  generatedAt DateTime @default(now()) @map("generated_at") @db.Timestamptz
+
+  // Relations
+  creator User @relation(fields: [createdBy], references: [id])
+
+  @@index([createdBy, createdAt(sort: Desc)], name: "idx_reports_created_by")
+  @@index([reportType, createdAt(sort: Desc)], name: "idx_reports_type")
+  @@index([status], name: "idx_reports_status")
+  @@map("reports")
+}
+
+// ============================================================================
+// 12. MAINTENANCE_LOG TABLE
+// ============================================================================
+model MaintenanceLog {
+  id          String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  deviceId    String    @map("device_id") @db.Uuid
+  startTime   DateTime  @map("start_time") @db.Timestamptz
+  endTime     DateTime  @map("end_time") @db.Timestamptz
+  reason      String?   @db.VarChar(100)
+  description String?   @db.Text
+  performedBy String?   @map("performed_by") @db.VarChar(255)
+  createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt   DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz
+  deletedAt   DateTime? @map("deleted_at") @db.Timestamptz
+
+  // Relations
+  device Device @relation(fields: [deviceId], references: [id], onDelete: Cascade)
+
+  @@index([deviceId, startTime(sort: Desc)], name: "idx_maintenance_device_time")
+  @@index([startTime, endTime], name: "idx_maintenance_time_range")
+  @@map("maintenance_log")
+}
+
+// ============================================================================
+// 13. ALERT_THRESHOLDS TABLE
+// ============================================================================
+model AlertThreshold {
+  id              String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  deviceId        String?  @map("device_id") @db.Uuid
+  parameter       String   @db.VarChar(50)
+  thresholdType   String   @map("threshold_type") @db.VarChar(20)
+  operator        String   @db.VarChar(10)
+  value           Decimal  @db.Decimal(10, 2)
+  enabled         Boolean  @default(true)
+  cooldownMinutes Int      @default(60) @map("cooldown_minutes")
+  createdBy       String?  @map("created_by") @db.Uuid
+  createdAt       DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt       DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz
+
+  // Relations
+  device       Device?        @relation(fields: [deviceId], references: [id])
+  creator      User?          @relation("ThresholdCreator", fields: [createdBy], references: [id])
+  alertHistory AlertHistory[]
+
+  @@index([parameter, enabled], name: "idx_threshold_parameter")
+  @@index([deviceId, parameter], name: "idx_threshold_device_param")
+  @@map("alert_thresholds")
+}
+
+// ============================================================================
+// 14. ALERT_HISTORY TABLE
+// ============================================================================
+model AlertHistory {
+  id             String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  thresholdId    String    @map("threshold_id") @db.Uuid
+  deviceId       String    @map("device_id") @db.Uuid
+  parameter      String    @db.VarChar(50)
+  recordId       String?   @map("record_id") @db.Uuid
+  observedAt     DateTime  @map("observed_at") @db.Timestamptz
+  actualValue    Decimal   @map("actual_value") @db.Decimal(10, 2)
+  thresholdValue Decimal   @map("threshold_value") @db.Decimal(10, 2)
+  thresholdType  String    @map("threshold_type") @db.VarChar(20)
+  acknowledged   Boolean   @default(false)
+  acknowledgedBy String?   @map("acknowledged_by") @db.Uuid
+  acknowledgedAt DateTime? @map("acknowledged_at") @db.Timestamptz
+  createdAt      DateTime  @default(now()) @map("created_at") @db.Timestamptz
+
+  // Relations
+  threshold      AlertThreshold      @relation(fields: [thresholdId], references: [id])
+  device         Device              @relation(fields: [deviceId], references: [id])
+  record         TelemetryProcessed? @relation(fields: [recordId], references: [recordId])
+  acknowledger   User?               @relation("AlertAcknowledger", fields: [acknowledgedBy], references: [id])
+  notifications  Notification[]
+
+  @@index([thresholdId, createdAt(sort: Desc)], name: "idx_alert_threshold")
+  @@index([deviceId, parameter, createdAt(sort: Desc)], name: "idx_alert_device_param")
+  @@index([acknowledged], name: "idx_alert_acknowledged")
+  @@map("alert_history")
+}
+
+// ============================================================================
+// 15. USER_NOTIFICATION_PREFERENCES TABLE
+// ============================================================================
+model UserNotificationPreference {
+  id             String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId         String   @map("user_id") @db.Uuid
+  notifyInApp    Boolean  @default(true) @map("notify_in_app")
+  notifyEmail    Boolean  @default(true) @map("notify_email")
+  notifyTelegram Boolean  @default(true) @map("notify_telegram")
+  telegramChatId String?  @map("telegram_chat_id") @db.VarChar(255)
+  emailAddress   String?  @map("email_address") @db.VarChar(255)
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt      DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz
+
+  // Relations
+  user User @relation(fields: [userId], references: [id])
+
+  @@unique([userId])
+  @@map("user_notification_preferences")
+}
+
+// ============================================================================
+// 16. REVOKED_TOKENS TABLE (Refresh Token Blacklist)
+// ============================================================================
+model RevokedToken {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  jti       String   @unique @db.VarChar(36)
+  userId    String   @map("user_id") @db.Uuid
+  expiresAt DateTime @map("expires_at") @db.Timestamptz
+  revokedAt DateTime @default(now()) @map("revoked_at") @db.Timestamptz
+
+  @@index([jti], name: "idx_revoked_token_jti")
+  @@index([expiresAt], name: "idx_revoked_token_expires")
+  @@map("revoked_tokens")
+}
+
+// ============================================================================
+// 17. CUSTOM_DISPLAYS TABLE
+// ============================================================================
+model CustomDisplay {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  slug        String   @unique @db.VarChar(100)
+  title       String   @db.VarChar(255)
+  description String?  @db.Text
+  deviceId    String   @map("device_id") @db.Uuid
+  config      Json     @db.JsonB
+  isPublic    Boolean  @default(true) @map("is_public")
+  createdBy   String   @map("created_by") @db.Uuid
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt   DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz
+
+  // Relations
+  device  Device @relation(fields: [deviceId], references: [id])
+  creator User   @relation(fields: [createdBy], references: [id])
+
+  @@index([slug], name: "idx_display_slug")
+  @@index([createdBy], name: "idx_display_creator")
+  @@map("custom_displays")
+}
+
+// ============================================================================
+// 18. SENSOR_CALIBRATION TABLE
+// ============================================================================
+// Per-device, per-parameter linear calibration: corrected = raw * slope + offset.
+// Applied at MQTT ingestion before storage/alerts/WQI/live-cache. Defaults
+// (slope 1, offset 0) are a no-op, so uncalibrated parameters pass through.
+model SensorCalibration {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  deviceId  String   @map("device_id") @db.Uuid
+  parameter String   @db.VarChar(20) // ph, do, nh3n, cod, bod, tss, temperature, depth
+  operation String   @default("none") @db.VarChar(10) // none | multiply | divide | add | subtract
+  value     Decimal  @default(0) @db.Decimal(12, 6)
+  updatedBy String?  @map("updated_by") @db.Uuid
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz
+
+  // Relations
+  device  Device @relation(fields: [deviceId], references: [id], onDelete: Cascade)
+  updater User?  @relation("CalibrationUpdater", fields: [updatedBy], references: [id])
+
+  @@unique([deviceId, parameter], name: "uq_calibration_device_param")
+  @@index([deviceId], name: "idx_calibration_device")
+  @@map("sensor_calibration")
+}

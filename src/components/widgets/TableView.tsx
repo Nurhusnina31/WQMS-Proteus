@@ -1,0 +1,175 @@
+import { useState } from "react";
+import Pagination from "./Pagination";
+import { formatPollutantValue } from "../../utils/numberFormat";
+import { formatDateTime } from "../../utils/dateFormat";
+import { useUnits } from "../../context/UnitContext";
+
+interface DataRow {
+  t: string;
+  ph: number;
+  do: number;
+  nh3n: number;
+  cod: number;
+  bod: number;
+  tss: number;
+  wqi: number;
+  temperature: number;
+  depth: number;
+}
+
+type TableViewProps = {
+  data: DataRow[];
+  device: string;
+  startDate?: string;
+  endDate?: string;
+  devices: any[];
+};
+
+export default function TableView({ data, device, devices }: TableViewProps) {
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(15);
+  const { convert, getUnit } = useUnits();
+
+  const filteredData = data;
+
+  const totalItems = filteredData.length;
+  const totalPages = Math.ceil(totalItems / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = Math.min(startIndex + itemsPerPage, totalItems);
+  const currentData = filteredData.slice(startIndex, endIndex);
+
+  return (
+    <>
+      
+    <style>{`
+      .custom-table-scroll::-webkit-scrollbar {
+        height: 8px;
+        width: 8px;
+      }
+
+      .custom-table-scroll::-webkit-scrollbar-track {
+        background: #EFF8FF;
+        border-radius: 6px;
+      }
+
+      .custom-table-scroll::-webkit-scrollbar-thumb {
+        background: #A9CDE2;
+        border-radius: 6px;
+      }
+
+      .custom-table-scroll::-webkit-scrollbar-thumb:hover {
+        background: #0369A1;
+      }
+
+      .custom-table-scroll {
+        scrollbar-width: thin;
+        scrollbar-color: #A9CDE2 #EFF8FF;
+      }
+    `}</style>
+
+      <div className="flex min-w-0 flex-1 flex-col overflow-hidden bg-page p-4 sm:p-6">
+        <div className="custom-table-scroll min-h-0 flex-1 overflow-auto rounded-xl border border-line bg-white shadow-sm">
+          <table className="w-full min-w-[1120px] text-sm text-ink">
+            <thead className="sticky top-0 z-10 bg-sidebar text-ink">
+              <tr>
+                <th className="px-4 py-3 text-left font-semibold border-r border-line min-w-[180px]">
+                  Time & Date
+                </th>
+                <th className="px-4 py-3 text-center font-semibold border-r border-line min-w-[140px]">
+                  Location
+                </th>
+                <th className="px-4 py-3 text-center font-semibold border-r border-line min-w-[100px]">
+                  <div>pH</div>
+                  <div className="text-xs font-normal text-muted">{getUnit("ph")}</div>
+                </th>
+                <th className="px-4 py-3 text-center font-semibold border-r border-line min-w-[100px]">
+                  <div>DO</div>
+                  <div className="text-xs font-normal text-muted">{getUnit("do")}</div>
+                </th>
+                <th className="px-4 py-3 text-center font-semibold border-r border-line min-w-[110px]">
+                  <div>NH₃-N</div>
+                  <div className="text-xs font-normal text-muted">{getUnit("nh3n")}</div>
+                </th>
+                <th className="px-4 py-3 text-center font-semibold border-r border-line min-w-[100px]">
+                  <div>COD</div>
+                  <div className="text-xs font-normal text-muted">{getUnit("cod")}</div>
+                </th>
+                <th className="px-4 py-3 text-center font-semibold border-r border-line min-w-[100px]">
+                  <div>BOD</div>
+                  <div className="text-xs font-normal text-muted">{getUnit("bod")}</div>
+                </th>
+                <th className="px-4 py-3 text-center font-semibold border-r border-line min-w-[100px]">
+                  <div>TSS</div>
+                  <div className="text-xs font-normal text-muted">{getUnit("tss")}</div>
+                </th>
+                <th className="px-4 py-3 text-center font-semibold border-r border-line min-w-[100px]">
+                  <div>WQI</div>
+                  <div className="text-xs font-normal text-muted">{getUnit("wqi")}</div>
+                </th>
+                <th className="px-4 py-3 text-center font-semibold border-r border-line min-w-[120px]">
+                  <div>Temperature</div>
+                  <div className="text-xs font-normal text-muted">{getUnit("temperature")}</div>
+                </th>
+                <th className="px-4 py-3 text-center font-semibold min-w-[100px]">
+                  <div>Depth</div>
+                  <div className="text-xs font-normal text-muted">{getUnit("depth")}</div>
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              {currentData.map((row, idx) => (
+                <tr key={idx} className="border-b border-line bg-white even:bg-[#F8FBFD] transition-colors duration-150 hover:bg-[#EAF4FB]">
+                  <td className="px-4 py-3 text-left">{formatDateTime(row.t)}</td>
+                  <td className="px-4 py-3 text-center">
+                    {devices.find((d) => d.id === device)?.location || "–"}
+                  </td>
+                  <td className="px-4 py-3 text-center">
+                    {formatPollutantValue(convert(row.ph, "ph") ?? row.ph, "ph")}
+                  </td>
+                  <td className="px-4 py-3 text-center">
+                    {formatPollutantValue(convert(row.do, "do") ?? row.do, "do")}
+                  </td>
+                  <td className="px-4 py-3 text-center">
+                    {formatPollutantValue(convert(row.nh3n, "nh3n") ?? row.nh3n, "nh3n")}
+                  </td>
+                  <td className="px-4 py-3 text-center">
+                    {formatPollutantValue(convert(row.cod, "cod") ?? row.cod, "cod")}
+                  </td>
+                  <td className="px-4 py-3 text-center">
+                    {formatPollutantValue(convert(row.bod, "bod") ?? row.bod, "bod")}
+                  </td>
+                  <td className="px-4 py-3 text-center">
+                    {formatPollutantValue(convert(row.tss, "tss") ?? row.tss, "tss")}
+                  </td>
+                  <td className="px-4 py-3 text-center">
+                    {formatPollutantValue(convert(row.wqi, "wqi") ?? row.wqi, "wqi")}
+                  </td>
+                  <td className="px-4 py-3 text-center">
+                    {formatPollutantValue(convert(row.temperature, "temperature") ?? row.temperature, "temperature")}
+                  </td>
+                  <td className="px-4 py-3 text-center">
+                    {formatPollutantValue(convert(row.depth, "depth") ?? row.depth, "depth")}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <Pagination
+        currentPage={currentPage}
+        totalPages={totalPages}
+        itemsPerPage={itemsPerPage}
+        startIndex={startIndex}
+        endIndex={endIndex}
+        totalItems={totalItems}
+        onPageChange={setCurrentPage}
+        onItemsPerPageChange={(items) => {
+          setItemsPerPage(items);
+          setCurrentPage(1);
+        }}
+      />
+    </>
+  );
+}

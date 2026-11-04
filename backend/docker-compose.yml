@@ -1,0 +1,72 @@
+# Explicit project name so this stack is isolated in Docker Desktop and
+# its volumes/network are namespaced as "aquamind-wqs_*" regardless of the
+# folder it runs from (otherwise Compose defaults to the folder name "backend").
+name: aquamind-wqs
+
+services:
+  # PostgreSQL with TimescaleDB Extension
+  database:
+    image: timescale/timescaledb:latest-pg15
+    container_name: aquamind-db
+    environment:
+      POSTGRES_USER: aquamind
+      POSTGRES_PASSWORD: secure_password_change_me
+      POSTGRES_DB: aquamind_db
+    ports:
+      - "5433:5432"
+    volumes:
+      - aquamind_postgres_data:/var/lib/postgresql/data
+    networks:
+      - aquamind-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U aquamind"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Redis Cache
+  redis:
+    image: redis:7-alpine
+    container_name: aquamind-redis
+    ports:
+      - "6380:6379"
+    volumes:
+      - aquamind_redis_data:/data
+    networks:
+      - aquamind-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+  # MQTT Broker (Eclipse Mosquitto)
+  mqtt:
+    image: eclipse-mosquitto:2
+    container_name: aquamind-mqtt
+    ports:
+      - "1884:1883"  # MQTT
+      - "9002:9001"  # WebSocket
+    volumes:
+      - ./mqtt/config:/mosquitto/config
+      - aquamind_mqtt_data:/mosquitto/data
+      - aquamind_mqtt_logs:/mosquitto/log
+    networks:
+      - aquamind-network
+    restart: unless-stopped
+
+volumes:
+  aquamind_postgres_data:
+    driver: local
+  aquamind_redis_data:
+    driver: local
+  aquamind_mqtt_data:
+    driver: local
+  aquamind_mqtt_logs:
+    driver: local
+
+networks:
+  aquamind-network:
+    driver: bridge
