@@ -141,6 +141,29 @@ export default function MaintenancePage() {
       return;
     }
 
+    
+    const overlappingWindow = logs.find((log) => {
+      if (log.deviceId !== formDeviceId) {
+        return false;
+      }
+
+      const existingStart = new Date(log.startTime).getTime();
+      const existingEnd = new Date(log.endTime).getTime();
+
+      return startMs < existingEnd && endMs > existingStart;
+    });
+
+    if (overlappingWindow) {
+      setFormError(
+        `The selected maintenance period overlaps an existing window
+        (${formatDateTime(overlappingWindow.startTime)} –
+        ${formatDateTime(overlappingWindow.endTime)}).
+        Please choose another time.`
+      );
+      return;
+    }
+
+
     try {
       setFormSubmitting(true);
       await maintenanceService.createMaintenance(formDeviceId, {
@@ -188,6 +211,9 @@ export default function MaintenancePage() {
     }
   };
 
+  const maintenanceInputClass = `mt-2 h-11 w-full min-w-0 rounded-xl border border-line bg-white px-4 text-sm text-ink outline-none transition-colors
+  hover:border-brand/50 focus:border-brand focus:ring-2 focus:ring-brand/20`;
+
   const renderRow = (log: MaintenanceLog) => {
     const active = isActive(log);
     const upcoming = isUpcoming(log);
@@ -197,115 +223,218 @@ export default function MaintenancePage() {
       devices.find((d) => d.id === log.deviceId)?.name ||
       log.deviceId.slice(0, 8);
 
+    
     return (
-      <div
+      <article
         key={log.id}
-        className="bg-[#ffffff] border border-slate-200 rounded-xl p-4 hover:border-slate-200 transition"
+        className="
+          min-w-0 rounded-2xl border border-line
+          bg-white p-4 shadow-sm
+          transition-all duration-200
+          hover:border-brand/40 hover:shadow-md
+          sm:p-5
+        "
       >
-        <div className="flex justify-between items-start mb-3 gap-2">
+        {/* Card Header */}
+        <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
+
+          <div className="min-w-0">
+            <h3 className="break-words text-base font-semibold text-ink">
+              {deviceLabel}
+            </h3>
+
+            {log.device?.location && (
+              <p className="mt-1 text-xs text-muted">
+                {log.device.location}
+              </p>
+            )}
+          </div>
+
+          {/* Maintenance Status */}
+          <span
+            className={`
+              inline-flex rounded-full border
+              px-3 py-1 text-xs font-semibold
+              ${
+                active
+                  ? "border-sky-200 bg-sky-50 text-brand"
+                  : upcoming
+                    ? "border-amber-200 bg-amber-50 text-amber-700"
+                    : "border-slate-200 bg-slate-100 text-slate-600"
+              }
+            `}
+          >
+            {active ? "ACTIVE" : upcoming ? "UPCOMING" : "PAST"}
+          </span>
+        </div>
+
+        {/* Maintenance Information */}
+        <div className="mb-4 space-y-3 rounded-xl border border-line bg-[#F7FBFE] p-4">
+
+          {/* Start Time */}
           <div>
-            <h3 className="font-semibold">{deviceLabel}</h3>
-            <p className="text-xs text-slate-500 mt-0.5">
-              {log.device?.location ?? ""}
+            <p className="text-xs font-medium text-muted">
+              Start Time
+            </p>
+
+            <p className="mt-1 break-words text-sm font-medium text-ink">
+              {formatDateTime(log.startTime)}
             </p>
           </div>
-          {active && (
-            <span className="px-2 py-1 rounded text-xs font-medium border bg-blue-500/20 text-blue-600 border-blue-500/30">
-              ACTIVE
-            </span>
-          )}
-          {upcoming && (
-            <span className="px-2 py-1 rounded text-xs font-medium border bg-amber-500/20 text-amber-600 border-amber-500/30">
-              UPCOMING
-            </span>
-          )}
-          {!active && !upcoming && (
-            <span className="px-2 py-1 rounded text-xs font-medium border bg-gray-500/20 text-slate-700 border-gray-500/30">
-              PAST
-            </span>
-          )}
-        </div>
 
-        <div className="bg-slate-100 rounded-lg p-3 mb-3 text-sm space-y-1">
+          {/* End Time */}
           <div>
-            <span className="text-slate-500">Start: </span>
-            {formatDateTime(log.startTime)}
+            <p className="text-xs font-medium text-muted">
+              End Time
+            </p>
+
+            <p className="mt-1 break-words text-sm font-medium text-ink">
+              {formatDateTime(log.endTime)}
+            </p>
           </div>
-          <div>
-            <span className="text-slate-500">End: </span>
-            {formatDateTime(log.endTime)}
-          </div>
+
+          {/* Reason */}
           {log.reason && (
-            <div>
-              <span className="text-slate-500">Reason: </span>
-              {log.reason}
+            <div className="border-t border-line pt-3">
+              <p className="text-xs font-medium text-muted">
+                Maintenance Reason
+              </p>
+
+              <p className="mt-1 text-sm font-medium text-ink">
+                {log.reason}
+              </p>
             </div>
           )}
+
+          {/* Description */}
           {log.description && (
-            <div>
-              <span className="text-slate-500">Notes: </span>
-              {log.description}
-            </div>
-          )}
-          {log.performedBy && (
-            <div>
-              <span className="text-slate-500">By: </span>
-              {log.performedBy}
+            <div className="border-t border-line pt-3">
+              <p className="text-xs font-medium text-muted">
+                Description
+              </p>
+
+              <p className="mt-1 break-words text-sm text-ink">
+                {log.description}
+              </p>
             </div>
           )}
         </div>
 
-        <div className="flex gap-2">
+        {/* Performed By */}
+        {log.performedBy && (
+          <p className="mb-4 break-words text-xs text-muted">
+            Scheduled by{" "}
+            <span className="font-medium text-ink">
+              {log.performedBy}
+            </span>
+          </p>
+        )}
+
+        {/* Card Actions */}
+        <div className="flex flex-wrap items-center gap-2 border-t border-line pt-4">
+
+          {/* End Maintenance */}
           {active && (
             <button
-              onClick={() => setEndDialog({ open: true, log })}
-              className="flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-sm bg-amber-500/20 text-amber-600 hover:bg-amber-500/30 transition"
+              type="button"
+              onClick={() =>
+                setEndDialog({
+                  open: true,
+                  log,
+                })
+              }
+              className="
+                inline-flex h-10 min-w-0 flex-1
+                items-center justify-center gap-2
+                rounded-lg border border-amber-200
+                bg-amber-50 px-3 text-sm
+                font-medium text-amber-700
+                transition-colors hover:bg-amber-100
+              "
             >
-              <StopCircle size={14} />
+              <StopCircle className="h-4 w-4 shrink-0" />
               End Now
             </button>
           )}
+
+          {/* Delete Maintenance */}
           <button
-            onClick={() => setDeleteDialog({ open: true, log })}
-            className="flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-sm bg-red-500/20 text-red-600 hover:bg-red-500/30 transition"
+            type="button"
+            onClick={() =>
+              setDeleteDialog({
+                open: true,
+                log,
+              })
+            }
+            aria-label={`Delete maintenance for ${deviceLabel}`}
+            className="
+              inline-flex h-10 items-center
+              justify-center gap-2
+              rounded-lg border border-red-200
+              bg-red-50 px-3 text-sm
+              font-medium text-red-600
+              transition-colors hover:bg-red-100
+            "
           >
-            <Trash2 size={14} />
+            <Trash2 className="h-4 w-4" />
             Delete
           </button>
+
         </div>
-      </div>
+      </article>
     );
+
   };
 
   return (
-    <div className="flex h-screen bg-[#ffffff] text-slate-800 overflow-hidden">
+    <div className="flex min-h-screen min-w-0 overflow-x-hidden bg-page text-ink">
       <Sidebar
         active="Maintenance"
         isOpen={sidebarOpen}
         onToggle={setSidebarOpen}
       />
 
-      <div className="flex-1 flex flex-col overflow-hidden">
+      <div className="flex min-w-0 flex-1 flex-col">
         <Topbar
           title="Maintenance Management"
           onMenuToggle={() => setSidebarOpen(true)}
         />
 
-        <main className="flex-1 overflow-auto p-6">
+        <main className="min-w-0 flex-1 bg-page p-4 sm:p-6">
           <div className="max-w-screen-2xl mx-auto space-y-6">
-            <div className="flex items-center">
+            
+            {/* Maintenance Page Heading */}
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+
+              <div className="min-w-0">
+                <p className="text-xs font-semibold uppercase tracking-wider text-brand">
+                  Device Maintenance
+                </p>
+
+                <h1 className="mt-1 text-xl font-semibold tracking-tight text-ink sm:text-2xl">
+                  Maintenance Windows
+                </h1>
+
+                <p className="mt-1 max-w-2xl text-sm leading-relaxed text-muted">
+                  Schedule and manage device maintenance periods.
+                  Maintenance windows help identify readings excluded
+                  from normal analytics, reports and alert evaluation.
+                </p>
+              </div>
+
               <button
+                type="button"
                 onClick={openForm}
-                className="flex text-sm text-black items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg transition"
+                className="inline-flex h-11 shrink-0 items-center justify-center gap-2 rounded-xl bg-brand px-5 text-sm font-semibold text-white shadow-sm transition-colors
+                  hover:bg-brand-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand
+                "
               >
-                <Plus size={15} />
+                <Plus className="h-4 w-4" />
                 Schedule Maintenance
               </button>
-              <p className="text-slate-500 pl-4 text-sm mt-1">
-                Maintenance windows mark device data as excluded from
-                analytics, reports, and alerts.
-              </p>
+
             </div>
+
 
             {error && (
               <div className="p-4 bg-red-900/20 border border-red-500/50 rounded-lg text-red-600">
@@ -318,26 +447,44 @@ export default function MaintenancePage() {
                 Loading maintenance logs...
               </div>
             ) : logs.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-12 bg-[#ffffff] border border-slate-200 rounded-xl text-center">
-                <div className="p-4 rounded-full bg-slate-100 mb-4 animate-pulse">
-                  <Wrench className="w-8 h-8 text-blue-500/50" />
+              <div className="flex min-h-[280px] flex-col items-center justify-center rounded-2xl border border-line bg-white px-5 py-10 text-center shadow-sm">
+
+                <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-2xl border border-line bg-sidebar">
+                  <Wrench className="h-8 w-8 text-brand" />
                 </div>
-                <h3 className="text-slate-800 font-medium text-lg mb-2">
+
+                <h3 className="mb-2 text-lg font-semibold text-ink">
                   No Maintenance Windows
                 </h3>
-                <p className="text-slate-500 text-sm max-w-sm mx-auto mb-6">
-                  Schedule a maintenance window to mark device data for
-                  exclusion during downtime.
+
+                <p className="max-w-md text-sm leading-relaxed text-muted">
+                  No maintenance windows have been scheduled yet.
+                  Schedule a maintenance period to identify monitoring
+                  data collected during device downtime.
                 </p>
+
+                <button
+                  type="button"
+                  onClick={openForm}
+                  className="mt-5 inline-flex items-center gap-2 rounded-xl border border-line bg-sidebar px-4 py-2.5 text-sm font-semibold text-brand transition-colors hover:bg-brand-light"
+                >
+                  <Plus className="h-4 w-4" />
+                  Schedule First Maintenance
+                </button>
+
               </div>
             ) : (
               <div className="space-y-8">
                 {grouped.active.length > 0 && (
                   <section>
-                    <h2 className="text-sm font-semibold text-blue-600 mb-3">
-                      ACTIVE ({grouped.active.length})
+                    <h2 className="mb-3 flex items-center gap-2 text-sm font-semibold text-brand">
+                      <span className="h-2 w-2 rounded-full bg-brand" />
+                      ACTIVE 
+                      <span className="rounded-full bg-brand-light px-2 py-0.5 text-xs">
+                        {grouped.active.length}
+                      </span>
                     </h2>
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 xl:gap-6">
+                    <div className="grid grid-cols-1 gap-4 md:grid-cols-2 2xl:grid-cols-3 2xl:gap-5">
                       {grouped.active.map(renderRow)}
                     </div>
                   </section>
@@ -345,10 +492,14 @@ export default function MaintenancePage() {
 
                 {grouped.upcoming.length > 0 && (
                   <section>
-                    <h2 className="text-sm font-semibold text-amber-600 mb-3">
-                      UPCOMING ({grouped.upcoming.length})
+                    <h2 className="mb-3 flex items-center gap-2 text-sm font-semibold text-brand">
+                      <span className="h-2 w-2 rounded-full bg-brand" />
+                      UPCOMING
+                      <span className="rounded-full bg-brand-light px-2 py-0.5 text-xs">
+                        {grouped.upcoming.length}
+                      </span>
                     </h2>
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 xl:gap-6">
+                    <div className="grid grid-cols-1 gap-4 md:grid-cols-2 2xl:grid-cols-3 2xl:gap-5">
                       {grouped.upcoming.map(renderRow)}
                     </div>
                   </section>
@@ -356,10 +507,14 @@ export default function MaintenancePage() {
 
                 {grouped.past.length > 0 && (
                   <section>
-                    <h2 className="text-sm font-semibold text-slate-700 mb-3">
-                      PAST ({grouped.past.length})
+                    <h2 className="mb-3 flex items-center gap-2 text-sm font-semibold text-brand">
+                      <span className="h-2 w-2 rounded-full bg-brand" />
+                      PAST
+                      <span className="rounded-full bg-brand-light px-2 py-0.5 text-xs">
+                        {grouped.past.length}
+                      </span>
                     </h2>
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 xl:gap-6">
+                    <div className="grid grid-cols-1 gap-4 md:grid-cols-2 2xl:grid-cols-3 2xl:gap-5">
                       {grouped.past.map(renderRow)}
                     </div>
                   </section>
@@ -372,104 +527,239 @@ export default function MaintenancePage() {
 
       {/* Form modal */}
       {showForm && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
-          <div className="bg-[#ffffff] border border-slate-200 rounded-xl w-full max-w-md p-5 space-y-4">
-            <div className="flex items-center justify-between">
-              <h3 className="font-semibold text-lg">Schedule Maintenance</h3>
-              <button
-                onClick={() => setShowForm(false)}
-                className="p-1 rounded hover:bg-slate-100"
-              >
-                <X size={18} />
-              </button>
-            </div>
+  <div className="fixed inset-0 z-[1100] flex items-center justify-center bg-[#0F2942]/50 p-3 sm:p-6">
 
-            <div className="space-y-3">
-              <label className="block text-sm">
-                <span className="text-slate-700">Device</span>
-                <select
-                  value={formDeviceId}
-                  onChange={(e) => setFormDeviceId(e.target.value)}
-                  className="mt-1 w-full bg-[#ffffff] border border-slate-200 rounded-lg px-3 py-2 text-sm"
-                >
-                  <option value="">— Select device —</option>
-                  {devices.map((d) => (
-                    <option key={d.id} value={d.id}>
-                      {d.name || d.deviceCode}
-                      {d.location ? ` (${d.location})` : ""}
-                    </option>
-                  ))}
-                </select>
-              </label>
+    <section
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="maintenance-form-title"
+      className="
+        flex max-h-[calc(100dvh-1.5rem)]
+        w-full max-w-lg flex-col overflow-hidden
+        rounded-2xl border border-line
+        bg-white text-ink shadow-2xl
+      "
+    >
+      {/* Modal Header */}
+      <div className="flex shrink-0 items-center justify-between gap-3 border-b border-line bg-[#F8FBFE] px-5 py-4">
 
-              <label className="block text-sm">
-                <span className="text-slate-700">Start time</span>
-                <input
-                  type="datetime-local"
-                  value={formStart}
-                  onChange={(e) => setFormStart(e.target.value)}
-                  className="mt-1 w-full bg-[#ffffff] border border-slate-200 rounded-lg px-3 py-2 text-sm"
-                />
-              </label>
+        <div className="flex min-w-0 items-center gap-3">
 
-              <label className="block text-sm">
-                <span className="text-slate-700">End time</span>
-                <input
-                  type="datetime-local"
-                  value={formEnd}
-                  onChange={(e) => setFormEnd(e.target.value)}
-                  className="mt-1 w-full bg-[#ffffff] border border-slate-200 rounded-lg px-3 py-2 text-sm"
-                />
-              </label>
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-brand-light text-brand">
+            <Wrench className="h-5 w-5" />
+          </div>
 
-              <label className="block text-sm">
-                <span className="text-slate-700">Reason</span>
-                <select
-                  value={formReason}
-                  onChange={(e) => setFormReason(e.target.value)}
-                  className="mt-1 w-full bg-[#ffffff] border border-slate-200 rounded-lg px-3 py-2 text-sm"
-                >
-                  {REASONS.map((r) => (
-                    <option key={r} value={r}>
-                      {r}
-                    </option>
-                  ))}
-                </select>
-              </label>
+          <div>
+            <h2
+              id="maintenance-form-title"
+              className="text-base font-semibold text-ink"
+            >
+              Schedule Maintenance
+            </h2>
 
-              <label className="block text-sm">
-                <span className="text-slate-700">Description (optional)</span>
-                <textarea
-                  value={formDescription}
-                  onChange={(e) => setFormDescription(e.target.value)}
-                  rows={3}
-                  className="mt-1 w-full bg-[#ffffff] border border-slate-200 rounded-lg px-3 py-2 text-sm"
-                />
-              </label>
-
-              {formError && (
-                <p className="text-sm text-red-600">{formError}</p>
-              )}
-            </div>
-
-            <div className="flex gap-2 justify-end">
-              <button
-                onClick={() => setShowForm(false)}
-                className="px-4 py-2 rounded-lg text-sm bg-slate-100 hover:bg-slate-100"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={submitForm}
-                disabled={formSubmitting}
-                className="px-4 py-2 rounded-lg text-sm bg-blue-600 hover:bg-blue-700 text-black disabled:opacity-50"
-              >
-                {formSubmitting ? "Saving..." : "Save"}
-              </button>
-            </div>
+            <p className="mt-1 text-xs text-muted">
+              Plan a monitoring device maintenance window
+            </p>
           </div>
         </div>
-      )}
+
+        <button
+          type="button"
+          onClick={() => setShowForm(false)}
+          disabled={formSubmitting}
+          aria-label="Close maintenance form"
+          className="rounded-lg p-2 text-muted transition-colors hover:bg-sidebar hover:text-brand disabled:opacity-50"
+        >
+          <X className="h-5 w-5" />
+        </button>
+      </div>
+
+      {/* Maintenance Form */}
+      <form
+        onSubmit={(e) => {
+          e.preventDefault();
+          void submitForm();
+        }}
+        className="flex min-h-0 flex-1 flex-col"
+      >
+        {/* Scrollable Form Body */}
+        <div className="min-h-0 flex-1 space-y-5 overflow-y-auto px-5 py-5">
+
+          {/* Device Selector */}
+          <div>
+            <label
+              htmlFor="maintenance-device"
+              className="block text-sm font-medium text-ink"
+            >
+              Monitoring Station
+              <span className="text-red-500"> *</span>
+            </label>
+
+            <select
+              id="maintenance-device"
+              value={formDeviceId}
+              onChange={(e) => setFormDeviceId(e.target.value)}
+              className={maintenanceInputClass}
+              required
+            >
+              <option value="">Select Monitoring Station</option>
+
+              {devices.map((d) => (
+                <option key={d.id} value={d.id}>
+                  {d.name || d.deviceCode}
+                  {d.location ? ` (${d.location})` : ""}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* Start Time */}
+          <div>
+            <label
+              htmlFor="maintenance-start"
+              className="block text-sm font-medium text-ink"
+            >
+              Start Time
+              <span className="text-red-500"> *</span>
+            </label>
+
+            <input
+              id="maintenance-start"
+              type="datetime-local"
+              value={formStart}
+              onChange={(e) => setFormStart(e.target.value)}
+              className={maintenanceInputClass}
+              required
+            />
+          </div>
+
+          {/* End Time */}
+          <div>
+            <label
+              htmlFor="maintenance-end"
+              className="block text-sm font-medium text-ink"
+            >
+              End Time
+              <span className="text-red-500"> *</span>
+            </label>
+
+            <input
+              id="maintenance-end"
+              type="datetime-local"
+              value={formEnd}
+              onChange={(e) => setFormEnd(e.target.value)}
+              className={maintenanceInputClass}
+              required
+            />
+
+            <p className="mt-2 text-xs text-muted">
+              End time must be later than start time.
+            </p>
+          </div>
+
+          {/* Maintenance Reason */}
+          <div>
+            <label
+              htmlFor="maintenance-reason"
+              className="block text-sm font-medium text-ink"
+            >
+              Maintenance Reason
+              <span className="text-red-500"> *</span>
+            </label>
+
+            <select
+              id="maintenance-reason"
+              value={formReason}
+              onChange={(e) => setFormReason(e.target.value)}
+              className={maintenanceInputClass}
+              required
+            >
+              {REASONS.map((reason) => (
+                <option key={reason} value={reason}>
+                  {reason}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* Description */}
+          <div>
+            <label
+              htmlFor="maintenance-description"
+              className="block text-sm font-medium text-ink"
+            >
+              Description
+              <span className="ml-1 text-xs font-normal text-muted">
+                (Optional)
+              </span>
+            </label>
+
+            <textarea
+              id="maintenance-description"
+              value={formDescription}
+              onChange={(e) => setFormDescription(e.target.value)}
+              rows={3}
+              placeholder="Add maintenance details or notes..."
+              className="mt-2 w-full min-w-0 resize-y rounded-xl border border-line bg-white px-4 py-3 text-sm text-ink placeholder:text-slate-400
+                outline-none transition-colors hover:border-brand/50 focus:border-brand focus:ring-2 focus:ring-brand/20
+              "
+            />
+          </div>
+
+          {/* Error Message */}
+          {formError && (
+            <div
+              role="alert"
+              className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700"
+            >
+              {formError}
+            </div>
+          )}
+
+        </div>
+
+        {/* Fixed Modal Footer */}
+        <div className="shrink-0 border-t border-line bg-white px-5 py-4">
+
+          <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+
+            <button
+              type="button"
+              onClick={() => setShowForm(false)}
+              disabled={formSubmitting}
+              className="
+                h-11 rounded-xl border border-line
+                bg-white px-5 text-sm font-medium text-ink
+                transition-colors hover:bg-sidebar
+                disabled:cursor-not-allowed
+                disabled:opacity-50
+              "
+            >
+              Cancel
+            </button>
+
+            <button
+              type="submit"
+              disabled={formSubmitting}
+              className="
+                h-11 rounded-xl bg-brand px-5
+                text-sm font-semibold text-white
+                transition-colors hover:bg-brand-hover
+                disabled:cursor-not-allowed
+                disabled:opacity-50
+              "
+            >
+              {formSubmitting
+                ? "Saving..."
+                : "Schedule Maintenance"}
+            </button>
+
+          </div>
+        </div>
+      </form>
+    </section>
+  </div>
+)}
 
       <ConfirmDialog
         isOpen={endDialog.open}

@@ -9,7 +9,7 @@ import {
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { login } from "../../services/auth.service";
-import proteusLogo from "../../assets/proteus-logo.png";
+import proteusLogo from "../../assets/proteus-logo-transparent.png";
 
 export default function Login() {
   const navigate = useNavigate();
@@ -113,7 +113,7 @@ return (
 
       {/* Bottom Text */}
       <p className="relative z-10 text-xs text-muted">
-        AquaMind · Water Quality Monitoring Platform
+        Proteus · Water Quality Monitoring Platform
       </p>
 
     </section>
@@ -139,9 +139,6 @@ return (
         {/* Form Introduction */}
         <div className="mb-7">
 
-          <p className="text-xs font-semibold uppercase tracking-wider text-brand">
-            Secure Access
-          </p>
 
           <h2 className="mt-2 text-3xl font-bold tracking-tight text-ink">
             Welcome back

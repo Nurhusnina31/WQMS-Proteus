@@ -109,6 +109,18 @@ export const getMinuteBuffer = async (
       "temperature",
       "pressure",
       "depth",
+      "pHmV",
+      "turbidity",
+      "TRYP",
+      "CDOM",
+      "ORP",
+      "nh4",
+      "HDO",
+      "HDOpercent",
+      "CDOMtemperature",
+      "TRYPppb",
+
+
     ];
 
     for (const parameter of parameters) {
@@ -149,6 +161,16 @@ export const clearMinuteBuffer = async (
       "temperature",
       "pressure",
       "depth",
+      "pHmV",
+      "turbidity",
+      "TRYP",
+      "CDOM",
+      "ORP",
+      "nh4",
+      "HDO",
+      "HDOpercent",
+      "CDOMtemperature",
+      "TRYPppb",
     ];
 
     for (const parameter of parameters) {

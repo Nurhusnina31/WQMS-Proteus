@@ -1,7 +1,7 @@
 import type { JSX } from "react";
 import { useState, useMemo } from "react";
 import { getStorageItem, STORAGE_KEYS } from "../../utils/storage";
-import proteusLogo from "../../assets/proteus-logo.png";
+import proteusLogo from "../../assets/proteus-logo-transparent.png";
 import {
   CircleGauge,
   MapPin,
@@ -156,13 +156,13 @@ export default function Sidebar({
         href: "/parameters",
         icon: <BookOpen className="w-5 h-5" />,
         allowedRoles: ALL_ROLES,
-      },*/
+      },
       {
         label: "Maintenance",
         href: "/maintenance",
         icon: <Wrench className="w-5 h-5" />,
         allowedRoles: ["admin", "technician"],
-      },
+      },*/
       {
         label: "Calibration",
         href: "/calibration",

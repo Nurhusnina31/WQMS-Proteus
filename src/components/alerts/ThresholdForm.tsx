@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { X, ChevronDown } from "lucide-react";
+import { X, ChevronDown, BellRing, Info } from "lucide-react";
 import * as thresholdService from "../../services/alert-threshold.service";
 
 interface ThresholdFormProps {
@@ -101,190 +101,347 @@ export default function ThresholdForm({
     }
   };
 
+  /* Parameter, Severity, Operator, Value, Cooldown inputs -dropdown*/
+  const inputClass = `h-11 w-full min-w-0 rounded-xl border border-line bg-white px-4 text-sm text-ink
+  outline-none transition-colors duration-200 hover:border-brand/50 focus:border-brand focus:ring-2 focus:ring-brand/20
+`;
+
+  
   return (
     <>
-      {/* Backdrop */}
+      {/* Background Overlay */}
       <div
-        className="fixed inset-0 bg-black/50 z-[1060] transition-opacity"
+        className="fixed inset-0 z-[1060] bg-[#0F2942]/40"
         onClick={onClose}
+        aria-hidden="true"
       />
 
-      {/* Side Panel */}
-      <div
-        className="fixed right-0 top-0 h-full w-full sm:w-[400px] md:w-[440px] lg:w-[480px] xl:w-[500px] bg-[#ffffff] border-l border-slate-200 z-[1070] shadow-2xl
-          transform transition-transform duration-300 ease-out flex flex-col"
+      {/* Threshold Drawer */}
+      <aside
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="threshold-form-title"
+        className="
+          fixed inset-y-0 right-0 z-[1070]
+          flex h-[100dvh] w-full max-w-full
+          flex-col border-l border-line
+          bg-white text-ink shadow-2xl
+          sm:w-[440px] lg:w-[500px]
+        "
       >
-        {/* Header - Fixed */}
-        <div className="bg-[#ffffff] border-b border-slate-200 p-6 flex-shrink-0">
-          <div className="flex items-center justify-between">
-            <h3 className="text-lg font-semibold">
-              {threshold ? "Edit Threshold" : "Create New Threshold"}
-            </h3>
-            <button
-              onClick={onClose}
-              className="p-2 hover:bg-slate-100 rounded-lg transition"
-            >
-              <X className="w-5 h-5" />
-            </button>
+        {/* Drawer Header */}
+        <div className="flex shrink-0 items-center justify-between gap-3 border-b border-line bg-[#F8FBFE] px-4 py-4 sm:px-6">
+
+          <div className="flex min-w-0 items-center gap-3">
+
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-brand-light text-brand">
+              <BellRing className="h-5 w-5" />
+            </div>
+
+            <div className="min-w-0">
+              <h2
+                id="threshold-form-title"
+                className="text-base font-semibold text-ink"
+              >
+                {threshold
+                  ? "Edit Threshold"
+                  : "Create New Threshold"}
+              </h2>
+
+              <p className="mt-0.5 text-xs text-muted">
+                Configure a water quality alert rule
+              </p>
+            </div>
+
           </div>
+
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label="Close threshold form"
+            className="
+              rounded-lg p-2 text-muted
+              transition-colors
+              hover:bg-sidebar hover:text-brand
+            "
+          >
+            <X className="h-5 w-5" />
+          </button>
         </div>
 
-        {/* Form Content - Scrollable */}
-        <div className="flex-1 overflow-y-auto p-6">
-          <div className="space-y-5">
+        {/* Form */}
+        <form
+          onSubmit={handleSubmit}
+          className="flex min-h-0 flex-1 flex-col"
+        >
+          {/* Scrollable Form Body */}
+          <div className="min-h-0 flex-1 space-y-5 overflow-y-auto px-4 py-5 sm:px-6">
+
             {/* Error Message */}
             {error && (
-              <div className="bg-red-500/10 border border-red-500/30 text-red-600 px-4 py-3 rounded-lg text-sm">
+              <div
+                role="alert"
+                className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700"
+              >
                 {error}
               </div>
             )}
 
             {/* Parameter */}
             <div>
-              <label className="block text-sm font-medium mb-2">
-                Parameter <span className="text-red-600">*</span>
+              <label
+                htmlFor="threshold-parameter"
+                className="mb-2 block text-sm font-medium text-ink"
+              >
+                Parameter
+                <span className="text-red-500"> *</span>
               </label>
+
               <div className="relative">
                 <select
+                  id="threshold-parameter"
                   value={formData.parameter}
                   onChange={(e) =>
-                    setFormData({ ...formData, parameter: e.target.value })
+                    setFormData({
+                      ...formData,
+                      parameter: e.target.value,
+                    })
                   }
-                  className="w-full px-4 py-3 pr-10 rounded-lg bg-[#ffffff] text-sm border border-slate-200 hover:border-blue-500/40 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all duration-300 cursor-pointer appearance-none hover:shadow-lg hover:shadow-blue-500/10 focus:outline-none"
+                  className={`${inputClass} appearance-none pr-10`}
                   required
                 >
                   {parameters.map((param) => (
-                    <option key={param.value} value={param.value}>
+                    <option
+                      key={param.value}
+                      value={param.value}
+                    >
                       {param.label}
                     </option>
                   ))}
                 </select>
-                <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500 pointer-events-none" />
+
+                <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-brand" />
               </div>
             </div>
 
-            {/* Severity */}
-            <div>
-              <label className="block text-sm font-medium mb-2">
-                Severity Level <span className="text-red-600">*</span>
-              </label>
+            {/* Severity Level */}
+            <div className="border-t border-line pt-5">
+              <p className="mb-3 text-sm font-medium text-ink">
+                Severity Level
+                <span className="text-red-500"> *</span>
+              </p>
+
               <div className="grid grid-cols-3 gap-2">
-                {severities.map((severity) => (
-                  <button
-                    key={severity.value}
-                    type="button"
-                    onClick={() =>
+                {severities.map((severity) => {
+                  const selected =
+                    formData.thresholdType === severity.value;
+
+                  const activeStyle =
+                    severity.value === "warning"
+                      ? "border-amber-400 bg-amber-50 text-amber-800"
+                      : severity.value === "critical"
+                        ? "border-orange-400 bg-orange-50 text-orange-800"
+                        : "border-red-400 bg-red-50 text-red-800";
+
+                  return (
+                    <button
+                      key={severity.value}
+                      type="button"
+                      aria-pressed={selected}
+                      onClick={() =>
+                        setFormData({
+                          ...formData,
+                          thresholdType: severity.value,
+                        })
+                      }
+                      className={`
+                        min-h-11 rounded-xl border px-2
+                        text-xs font-semibold
+                        transition-colors duration-200
+                        ${
+                          selected
+                            ? activeStyle
+                            : "border-line bg-white text-muted hover:border-brand/40 hover:bg-sidebar"
+                        }
+                      `}
+                    >
+                      {severity.label}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Threshold Condition */}
+            <div className="border-t border-line pt-5">
+              <label
+                htmlFor="threshold-operator"
+                className="mb-3 block text-sm font-medium text-ink"
+              >
+                Threshold Condition
+                <span className="text-red-500"> *</span>
+              </label>
+
+              <div className="space-y-3">
+
+                {/* Operator */}
+                <div className="relative">
+                  <select
+                    id="threshold-operator"
+                    value={formData.operator}
+                    onChange={(e) =>
                       setFormData({
                         ...formData,
-                        thresholdType: severity.value,
+                        operator: e.target.value,
                       })
                     }
-                    className={`
-                    px-3 py-2.5 rounded-lg border transition font-medium text-xs
-                    ${
-                      formData.thresholdType === severity.value
-                        ? `${severity.color} border-current bg-current/10`
-                        : "border-slate-200 text-slate-500 hover:border-slate-200"
-                    }
-                  `}
+                    className={`${inputClass} appearance-none pr-10`}
+                    required
                   >
-                    {severity.label}
-                  </button>
-                ))}
-              </div>
-            </div>
+                    {operators.map((op) => (
+                      <option
+                        key={op.value}
+                        value={op.value}
+                      >
+                        {op.label}
+                      </option>
+                    ))}
+                  </select>
 
-            {/* Condition (Operator + Value) */}
-            <div>
-              <label className="block text-sm font-medium mb-2">
-                Threshold Condition <span className="text-red-600">*</span>
-              </label>
-              <div className="grid grid-cols-2 gap-2">
-                <select
-                  value={formData.operator}
-                  onChange={(e) =>
-                    setFormData({ ...formData, operator: e.target.value })
-                  }
-                  className="col-span-2 px-4 py-3 pr-10 rounded-lg bg-[#ffffff] text-sm border border-slate-200 hover:border-blue-500/40 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all duration-300 cursor-pointer appearance-none min-w-[180px] hover:shadow-lg hover:shadow-blue-500/10 focus:outline-none"
-                  required
-                >
-                  {operators.map((op) => (
-                    <option key={op.value} value={op.value}>
-                      {op.label}
-                    </option>
-                  ))}
-                </select>
+                  <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-brand" />
+                </div>
+
+                {/* Threshold Value */}
                 <input
                   type="number"
+                  aria-label="Threshold value"
                   step="0.01"
                   value={formData.value}
                   onChange={(e) =>
-                    setFormData({ ...formData, value: e.target.value })
+                    setFormData({
+                      ...formData,
+                      value: e.target.value,
+                    })
                   }
-                  placeholder="Enter value"
-                  className="col-span-2 px-4 py-3 rounded-lg bg-[#ffffff] text-sm border border-slate-200 hover:border-blue-500/40 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all duration-300 hover:shadow-lg hover:shadow-blue-500/10 focus:outline-none"
+                  placeholder="Enter threshold value"
+                  className={inputClass}
                   required
                 />
               </div>
-              <p className="text-xs text-slate-500 mt-2">
-                Alert triggers when value {formData.operator}{" "}
-                {formData.value || "___"}
+
+              {/* Condition Description */}
+              <p className="mt-2 text-xs leading-relaxed text-muted">
+                Alert triggers when the value{" "}
+                <span className="font-semibold text-ink">
+                  {formData.operator} {formData.value || "___"}
+                </span>
               </p>
             </div>
 
-            {/* Cooldown */}
-            <div>
-              <label className="block text-sm font-medium mb-2">
-                Cooldown Period (minutes){" "}
-                <span className="text-red-600">*</span>
+            {/* Cooldown Period */}
+            <div className="border-t border-line pt-5">
+              <label
+                htmlFor="threshold-cooldown"
+                className="mb-2 block text-sm font-medium text-ink"
+              >
+                Cooldown Period (minutes)
+                <span className="text-red-500"> *</span>
               </label>
+
               <input
+                id="threshold-cooldown"
                 type="number"
                 min="5"
                 value={formData.cooldownMinutes}
                 onChange={(e) =>
-                  setFormData({ ...formData, cooldownMinutes: e.target.value })
+                  setFormData({
+                    ...formData,
+                    cooldownMinutes: e.target.value,
+                  })
                 }
-                className="w-full px-4 py-3 rounded-lg bg-[#ffffff] text-sm border border-slate-200 hover:border-blue-500/40 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all duration-300 hover:shadow-lg hover:shadow-blue-500/10 focus:outline-none"
+                className={inputClass}
                 required
               />
-              <p className="text-xs text-slate-500 mt-2">
-                Minimum 5 minutes, maximum 24 hours (1440 minutes)
+
+              <p className="mt-2 text-xs leading-relaxed text-muted">
+                Minimum 5 minutes, maximum 24 hours
+                (1440 minutes).
               </p>
             </div>
 
-            {/* Scope Info */}
-            <div className="bg-blue-500/10 border border-blue-500/20 rounded-lg p-4">
-              <p className="text-sm text-blue-600">
-                <strong>Scope:</strong> This threshold applies to{" "}
-                <strong>all devices</strong> (global threshold)
-              </p>
+            {/* Scope Information */}
+            <div className="rounded-xl border border-line bg-sidebar p-4">
+
+              <div className="flex items-start gap-3">
+
+                <Info className="mt-0.5 h-4 w-4 shrink-0 text-brand" />
+
+                <div>
+                  <p className="text-sm font-semibold text-brand">
+                    Threshold Scope
+                  </p>
+
+                  <p className="mt-1 text-xs leading-relaxed text-[#466982]">
+                    {formData.deviceId
+                      ? "This threshold applies to a specific monitoring device."
+                      : "This threshold applies to all monitoring devices (global threshold)."}
+                  </p>
+                </div>
+
+              </div>
+            </div>
+
+          </div>
+
+          {/* Fixed Drawer Footer */}
+          <div className="shrink-0 border-t border-line bg-white px-4 py-4 sm:px-6">
+
+            <div className="flex flex-col-reverse gap-3 sm:flex-row">
+
+              {/* Cancel */}
+              <button
+                type="button"
+                onClick={onClose}
+                disabled={isSubmitting}
+                className="
+                  h-11 flex-1 rounded-xl
+                  border border-line bg-white
+                  px-4 text-sm font-medium text-ink
+                  transition-colors
+                  hover:bg-sidebar
+                  disabled:cursor-not-allowed
+                  disabled:opacity-50
+                "
+              >
+                Cancel
+              </button>
+
+              {/* Create / Update */}
+              <button
+                type="submit"
+                disabled={isSubmitting}
+                className="
+                  h-11 flex-1 rounded-xl
+                  bg-brand px-4
+                  text-sm font-semibold text-white
+                  transition-colors
+                  hover:bg-brand-hover
+                  disabled:cursor-not-allowed
+                  disabled:opacity-50
+                "
+              >
+                {isSubmitting
+                  ? "Saving..."
+                  : threshold
+                    ? "Update Threshold"
+                    : "Create Threshold"}
+              </button>
+
             </div>
           </div>
-        </div>
-
-        {/* Footer Buttons - Fixed at Bottom */}
-        <div className="bg-[#ffffff] border-t border-slate-200 p-5 flex-shrink-0">
-          <div className="flex gap-3">
-            <button
-              type="button"
-              onClick={onClose}
-              className="flex-1 px-4 py-2.5 bg-slate-100 hover:bg-slate-100 rounded-lg text-md transition"
-              disabled={isSubmitting}
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              onClick={handleSubmit}
-              className="flex-1 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 rounded-lg transition font-medium text-md disabled:opacity-50 disabled:cursor-not-allowed"
-              disabled={isSubmitting}
-            >
-              {isSubmitting ? "Saving..." : threshold ? "Update" : "Create"}
-            </button>
-          </div>
-        </div>
-      </div>
+        </form>
+      </aside>
     </>
   );
+
 }

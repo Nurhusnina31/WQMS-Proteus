@@ -124,6 +124,18 @@ model TelemetryProcessed {
   tempValue       Decimal? @map("temp_value") @db.Decimal(5, 2)     // Water Temperature (°C)
   pressureValue   Decimal? @map("pressure_value") @db.Decimal(7, 2) // Pressure (kPa)
   depthValue      Decimal? @map("depth_value") @db.Decimal(7, 3)    // Water Depth (m)
+  pHmV            Decimal? @map("pHmV_value") @db.Decimal(7, 3)
+  TurbValue       Decimal? @map("turb_value") @db.Decimal(7, 3)
+  TRYPValue       Decimal? @map("TYRP_value") @db.Decimal(7, 3)
+  CDOMValue       Decimal? @map("CDOM_value") @db.Decimal(7, 3)
+  ORPValue        Decimal? @map("ORP_value") @db.Decimal(7, 3)
+  nh4Value        Decimal? @map("nh4_value") @db.Decimal(7, 3)
+  HDOValue        Decimal? @map("HDO_value") @db.Decimal(7, 3)
+  HDOper          Decimal? @map("HDOper_value") @db.Decimal(7, 3)
+  CDOMtemp        Decimal? @map("CDOMtemp_value") @db.Decimal(7, 3)
+  TRYPppb         Decimal? @map("TYRPppb_value") @db.Decimal(7, 3)
+
+
   
   // Metadata
   dataQuality     String   @default("pending") @map("data_quality") @db.VarChar(20)
@@ -475,7 +487,7 @@ model SensorCalibration {
   device  Device @relation(fields: [deviceId], references: [id], onDelete: Cascade)
   updater User?  @relation("CalibrationUpdater", fields: [updatedBy], references: [id])
 
-  @@unique([deviceId, parameter], name: "uq_calibration_device_param")
+  @@unique([deviceId, parameter], name: "uq_calibration_device_param", map: "uq_calibration_device_param")
   @@index([deviceId], name: "idx_calibration_device")
   @@map("sensor_calibration")
 }
