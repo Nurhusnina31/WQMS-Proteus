@@ -31,6 +31,17 @@ export default function WqiGauge({ deviceId }: WqiGaugeProps) {
       nh3n?: number | null;
       tss?: number | null;
       temperature?: number | null;
+      pHmV?: number | null;
+      turbidity?: number | null;
+      TRYP?: number | null;
+      CDOM?: number | null;
+      ORP?: number | null;
+      nh4?: number | null;
+      HDO?: number | null;
+      HDOpercent?: number | null;
+      CDOMtemperature?: number | null;
+      TRYPppb?: number | null;    
+
     }) => {
       const res = computeWqiBreakdown(r);
       setResult(res);
@@ -51,6 +62,16 @@ export default function WqiGauge({ deviceId }: WqiGaugeProps) {
           nh3n: v("nh3n"),
           tss: v("tss"),
           temperature: v("temperature"),
+          pHmV: v("phmV"),
+          turbidity: v("turbidity"),
+          TRYP: v("TRYP"),
+          CDOM: v("CDOM"),
+          ORP: v("ORP"),
+          nh4: v("nh4"),
+          HDO: v("HDO"),
+          HDOpercent: v("HDOpercent"),
+          CDOMtemperature: v("CDOMtemperature"),
+          TRYPppb: v("TRYPppb"),  
         });
       } catch {
         // Fallback: latest DB reading
@@ -68,6 +89,16 @@ export default function WqiGauge({ deviceId }: WqiGaugeProps) {
               nh3n: n(l.nh3nValue),
               tss: n(l.tssValue),
               temperature: n(l.tempValue),
+              pHmV: n(l.phmVValue),
+              turbidity: n(l.turbidityValue),
+              TRYP: n(l.TRYValue),
+              CDOM: n(l.CDOMValue),
+              ORP: n(l.ORPValue),
+              nh4: n(l.nh4Value),
+              HDO: n(l.HDOValue),
+              HDOpercent: n(l.HDOpercentValue),
+              CDOMtemperature: n(l.CDOMtemperatureValue),
+              TRYPppb: n(l.TRYppbValue),
             });
           } else {
             setLoading(false);

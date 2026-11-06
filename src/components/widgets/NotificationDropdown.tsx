@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { X, Bell, AlertCircle } from "lucide-react";
+import { X, Bell, BellOff, CheckCheck  } from "lucide-react";
 import * as notificationService from "../../services/notification.service";
 import NotificationItem from "./NotificationItem";
 
@@ -105,84 +105,168 @@ export default function NotificationDropdown({
 
   if (!isOpen) return null;
 
-  return (
-    <>
-      <style>{`
-        .notification-scroll::-webkit-scrollbar {
-          height: 10px;
-          width: 10px;
-        }
-        .notification-scroll::-webkit-scrollbar-track {
-          background: #f1f5f9;
-          border-radius: 4px;
-        }
-        .notification-scroll::-webkit-scrollbar-thumb {
-          background: #2563eb;
-          border-radius: 4px;
-        }
-        .notification-scroll::-webkit-scrollbar-thumb:hover {
-          background: #1d4ed8;
-        }
-        .notification-scroll {
-          scrollbar-width: thin;
-          scrollbar-color: #2563eb #f1f5f9;
-        }
-      `}</style>
+  
+return (
+  <>
+    {/* Ocean Blue Notification Scrollbar */}
+    <style>{`
+      .notification-scroll::-webkit-scrollbar {
+        width: 6px;
+        height: 6px;
+      }
 
-      {/* Backdrop */}
-      <div className="fixed inset-0 z-40" onClick={onClose} />
+      .notification-scroll::-webkit-scrollbar-track {
+        background: #EFF8FF;
+        border-radius: 6px;
+      }
 
-      {/* Dropdown Panel */}
-      <div
-        className="absolute top-full right-0 mt-2 w-98 max-w-[calc(100vw-2rem)]
-                   bg-[#ffffff] border border-gray-700 rounded-xl shadow-2xl z-50
-                   flex flex-col max-h-[600px]"
-        onClick={(e) => e.stopPropagation()}
-      >
-        {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b border-gray-700">
-          <div className="flex items-center gap-3">
-            <Bell className="w-5 h-5 text-blue-600" />
-            <div>
-              <h3 className="text-lg font-semibold text-slate-800">
-                Notifications
-              </h3>
-              <p className="text-xs text-slate-500">{unreadCount} unread</p>
-            </div>
+      .notification-scroll::-webkit-scrollbar-thumb {
+        background: #A9CDE2;
+        border-radius: 6px;
+      }
+
+      .notification-scroll::-webkit-scrollbar-thumb:hover {
+        background: #0369A1;
+      }
+
+      .notification-scroll {
+        scrollbar-width: thin;
+        scrollbar-color: #A9CDE2 #EFF8FF;
+      }
+    `}</style>
+
+    {/* Backdrop */}
+    <div
+      className="fixed inset-0 z-40 bg-[#0F2942]/20 sm:bg-transparent"
+      onClick={onClose}
+      aria-hidden="true"
+    />
+
+    {/* Notification Dropdown */}
+    <div
+      role="dialog"
+      aria-label="Notifications"
+      className="
+        fixed inset-x-3 top-20 z-50
+        flex w-auto max-h-[calc(100dvh-6rem)]
+        min-w-0 flex-col overflow-hidden
+        rounded-2xl border border-line
+        bg-white text-ink
+        shadow-[0_16px_45px_rgba(15,41,66,0.15)]
+
+        sm:absolute sm:inset-x-auto
+        sm:right-0 sm:top-full sm:mt-2
+        sm:w-[420px]
+        sm:max-w-[calc(100vw-2rem)]
+        sm:max-h-[560px]
+      "
+      onClick={(e) => e.stopPropagation()}
+    >
+      {/* Header */}
+      <div className="flex shrink-0 items-center justify-between gap-3 border-b border-line bg-[#F8FBFE] px-4 py-4">
+
+        {/* Title and Icon */}
+        <div className="flex min-w-0 items-center gap-3">
+
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-brand-light text-brand">
+            <Bell className="h-5 w-5" />
           </div>
-          <div className="flex items-center gap-2">
-            {unreadCount > 0 && (
-              <button
-                onClick={handleMarkAllAsRead}
-                className="text-xs text-blue-600 hover:text-blue-600 transition"
-              >
-                Mark all read
-              </button>
-            )}
-            <button
-              onClick={onClose}
-              className="text-slate-500 hover:text-slate-800 transition"
-            >
-              <X className="w-5 h-5" />
-            </button>
+
+          <div className="min-w-0">
+            <h3 className="text-base font-semibold text-ink">
+              Notifications
+            </h3>
+
+            <p className="mt-0.5 text-xs text-muted">
+              {unreadCount} unread notification
+              {unreadCount !== 1 ? "s" : ""}
+            </p>
           </div>
+
         </div>
 
-        {/* Filter Tabs */}
-        <div className="flex gap-2 p-3 border-b border-slate-200 overflow-x-auto overflow-y-hidden notification-scroll flex-shrink-0 min-w-0">
+        {/* Header Actions */}
+        <div className="flex shrink-0 items-center gap-2">
+
+          {/* Mark All As Read */}
+          {unreadCount > 0 && (
+            <button
+              type="button"
+              onClick={handleMarkAllAsRead}
+              title="Mark all notifications as read"
+              className="
+                inline-flex items-center gap-1.5
+                rounded-lg px-2 py-2
+                text-xs font-medium text-brand
+                transition-colors hover:bg-brand-light
+              "
+            >
+              <CheckCheck className="h-4 w-4" />
+
+              <span className="hidden min-[380px]:inline">
+                Mark all read
+              </span>
+            </button>
+          )}
+
+          {/* Close Button */}
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label="Close notifications"
+            className="
+              flex h-8 w-8 shrink-0 items-center
+              justify-center rounded-lg
+              text-muted transition-colors
+              hover:bg-brand-light hover:text-brand
+            "
+          >
+            <X className="h-4 w-4" />
+          </button>
+
+        </div>
+      </div>
+
+      {/* Notification Filters */}
+      <div className="shrink-0 border-b border-line bg-white px-4 py-3">
+
+        <div className="flex flex-wrap items-center gap-2">
+
           {filters.map((filter) => (
+
             <button
               key={filter.value}
+              type="button"
               onClick={() => setActiveFilter(filter.value)}
-              className={`flex items-center gap-2 px-3 h-8 text-xs font-medium rounded-lg transition whitespace-nowrap flex-shrink-0 ${
-                activeFilter === filter.value
-                  ? "bg-blue-600/20 text-blue-600"
-                  : "text-slate-500 hover:bg-slate-100 hover:text-slate-800"
-              }`}
+              aria-pressed={activeFilter === filter.value}
+              className={`
+                inline-flex min-h-9 items-center
+                justify-center gap-1.5
+                rounded-lg px-3 py-2
+                text-xs font-medium
+                transition-colors duration-200
+                ${
+                  activeFilter === filter.value
+                    ? "bg-brand text-white shadow-sm"
+                    : "border border-line bg-white text-muted hover:bg-sidebar hover:text-brand"
+                }
+              `}
             >
-              {filter.label}
+              <span>{filter.label}</span>
+
+              {/* Unread Count for Each Filter */}
               {filter.value !== "all" && (
-                <span className="px-1.5 py-0.5 rounded-full bg-slate-200 text-slate-700 text-xs">
+                <span
+                  className={`
+                    rounded-full px-1.5 py-0.5
+                    text-[10px] font-semibold
+                    ${
+                      activeFilter === filter.value
+                        ? "bg-white/20 text-white"
+                        : "bg-sidebar text-brand"
+                    }
+                  `}
+                >
                   {filter.value === "approvals"
                     ? notifications.filter(
                         (n) =>
@@ -191,51 +275,90 @@ export default function NotificationDropdown({
                           !n.isRead,
                       ).length
                     : notifications.filter(
-                        (n) => n.severity === filter.value && !n.isRead,
+                        (n) =>
+                          n.severity === filter.value &&
+                          !n.isRead,
                       ).length}
                 </span>
               )}
+
             </button>
           ))}
-        </div>
 
-        {/* Notifications List */}
-        <div className="flex-1 overflow-y-auto notification-scroll">
-          {sortedNotifications.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-12 px-4">
-              <AlertCircle className="w-12 h-12 text-gray-600 mb-3" />
-              <p className="text-slate-500 text-sm">No notifications</p>
-            </div>
-          ) : (
-            <div className="divide-y divide-gray-700">
-              {sortedNotifications.map((notification, index) => (
-                <NotificationItem
-                  key={notification.id}
-                  notification={{
-                    id: notification.id,
-                    type: notification.type || notification.severity, // Use type field for approvals
-                    title: notification.title,
-                    message: notification.message,
-                    timestamp: notification.createdAt,
-                    isRead: notification.isRead,
-                    priority:
-                      notification.severity === "emergency"
-                        ? "high"
-                        : notification.severity === "critical"
-                          ? "medium"
-                          : ("low" as any),
-                    actionUrl: notification.alertHistoryId
-                      ? `/alert-history`
-                      : undefined,
-                  }}
-                  onClick={handleNotificationClick}
-                  isLast={index === sortedNotifications.length - 1}
-                />
-              ))}
-            </div>
-          )}
         </div>
       </div>
-    </>
-  );
+
+      {/* Notifications List */}
+      <div className="notification-scroll min-h-0 flex-1 overflow-y-auto bg-white">
+
+        {sortedNotifications.length === 0 ? (
+
+          /* Empty State */
+          <div className="flex min-h-[220px] flex-col items-center justify-center px-5 py-8 text-center">
+
+            <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-2xl border border-line bg-sidebar">
+              <BellOff className="h-8 w-8 text-brand" />
+            </div>
+
+            <h4 className="text-sm font-semibold text-ink">
+              {activeFilter === "all"
+                ? "No Notifications Yet"
+                : "No Matching Notifications"}
+            </h4>
+
+            <p className="mt-2 max-w-[290px] text-xs leading-relaxed text-muted">
+              {activeFilter === "all"
+                ? "Your notifications will appear here when new updates or alerts are available."
+                : "There are no notifications in this category."}
+            </p>
+
+          </div>
+
+        ) : (
+
+          /* Existing Notification Items */
+          <div className="divide-y divide-line">
+
+            {sortedNotifications.map((notification, index) => (
+
+              <NotificationItem
+                key={notification.id}
+                notification={{
+                  id: notification.id,
+                  type:
+                    notification.type ||
+                    notification.severity,
+
+                  title: notification.title,
+                  message: notification.message,
+                  timestamp: notification.createdAt,
+                  isRead: notification.isRead,
+
+                  priority:
+                    notification.severity === "emergency"
+                      ? "high"
+                      : notification.severity === "critical"
+                        ? "medium"
+                        : ("low" as any),
+
+                  actionUrl: notification.alertHistoryId
+                    ? "/alert-history"
+                    : undefined,
+                }}
+                onClick={handleNotificationClick}
+                isLast={
+                  index === sortedNotifications.length - 1
+                }
+              />
+
+            ))}
+
+          </div>
+        )}
+      </div>
+
+    </div>
+  </>
+);
+
 }

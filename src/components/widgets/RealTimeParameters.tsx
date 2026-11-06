@@ -88,6 +88,16 @@ export default function RealTimeParameters({
             set("tss", latest.tssValue);
             set("temperature", latest.tempValue);
             set("depth", latest.depthValue);
+            set("phmV", latest.pHmV);
+            set("turbidity", latest.TurbValue);
+            set("TRYP", latest.TRYPValue);
+            set("CDOM", latest.CDOMValue);
+            set("ORP", latest.ORPValue);
+            set("nh4", latest.nh4Value);
+            set("HDO", latest.HDOValue);
+            set("HDOper", latest.HDOperValue);
+            set("CDOMtemp", latest.CDOMtempValue);
+            set("TRYPppb", latest.TRYPppbValue);
             setLiveData(mapped);
           }
         } catch (dbErr) {

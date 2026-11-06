@@ -12,7 +12,6 @@ import {
   Bell,
   History,
   BarChart3,
-  Wrench,
   SlidersHorizontal,
 } from "lucide-react";
 

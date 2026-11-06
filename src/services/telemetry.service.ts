@@ -13,6 +13,16 @@ export interface SensorReading {
   tssValue: string | null;
   tempValue: string | null;
   depthValue: string | null;
+  pHmV: string | null;
+  TurbValue: string | null;
+  TRYPValue: string | null;
+  CDOMValue: string | null;
+  ORPValue: string | null;
+  nh4Value: string | null;
+  HDOValue: string | null;
+  HDOper: string | null;
+  CDOMtemp: string | null;
+  TRYPppb: string | null;
   dataQuality: string;
   device?: {
     name: string;

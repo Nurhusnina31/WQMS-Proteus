@@ -18,6 +18,16 @@ export interface TelemetryReadings {
   temperature?: number; // Water Temperature (°C)
   pressure?: number;   // Pressure (kPa)
   depth?: number;      // Water Depth (m)
+  pHmV?: number;       // pH in millivolts
+  turbidity?: number;  // Turbidity (NTU)
+  TRYP?: number;       // TRYP (mg/L)
+  CDOM?: number;       // CDOM (mg/L)
+  ORP?: number;        // Oxidation-Reduction Potential (mV)
+  nh4?: number;        // Ammonium (mg/L)
+  HDO?: number;       // HDO (mg/L)
+  HDOpercent?: number; // HDO percentage
+  CDOMtemperature?: number; // CDOM temperature
+  TRYPppb?: number;    // TRYP in ppb
 }
 
 export interface RelationViolation {

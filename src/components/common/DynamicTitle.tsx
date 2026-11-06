@@ -16,7 +16,7 @@ const ROUTE_TITLES: Record<string, string> = {
   "/calibration": "Calibration",
 };
 
-const APP_NAME = "AquaMind";
+const APP_NAME = "Proteus";
 
 /**
  * Listens to route changes and updates the browser tab title.

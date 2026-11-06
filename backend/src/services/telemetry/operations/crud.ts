@@ -85,15 +85,31 @@ export const createReading = async (input: ReadingInput) => {
       tssValue:
         readings.tss !== undefined ? new Prisma.Decimal(readings.tss) : null,
       tempValue:
-        readings.temperature !== undefined
-          ? new Prisma.Decimal(readings.temperature)
-          : null,
+        readings.temperature !== undefined ? new Prisma.Decimal(readings.temperature) : null,
       pressureValue:
-        readings.pressure !== undefined
-          ? new Prisma.Decimal(readings.pressure)
-          : null,
+        readings.pressure !== undefined ? new Prisma.Decimal(readings.pressure) : null,
       depthValue:
         readings.depth !== undefined ? new Prisma.Decimal(readings.depth) : null,
+      pHmV:
+        readings.pHmV !== undefined ? new Prisma.Decimal(readings.pHmV) : null,
+      TurbValue:
+        readings.turbidity !== undefined ? new Prisma.Decimal(readings.turbidity) : null,
+      TRYPValue:
+        readings.TRYP !== undefined ? new Prisma.Decimal(readings.TRYP) : null,
+      CDOMValue:
+        readings.CDOM !== undefined ? new Prisma.Decimal(readings.CDOM) : null,
+      ORPValue:
+        readings.ORP !== undefined ? new Prisma.Decimal(readings.ORP) : null,
+      nh4Value:
+        readings.nh4 !== undefined ? new Prisma.Decimal(readings.nh4) : null,
+      HDOValue:
+        readings.HDO !== undefined ? new Prisma.Decimal(readings.HDO) : null,
+      HDOper:
+        readings.HDOpercent !== undefined ? new Prisma.Decimal(readings.HDOpercent) : null,
+      CDOMtemp:
+        readings.CDOMtemperature !== undefined ? new Prisma.Decimal(readings.CDOMtemperature) : null,
+      TRYPppb:
+        readings.TRYPppb !== undefined ? new Prisma.Decimal(readings.TRYPppb) : null, 
       dataQuality: validation.hasIssues ? "flagged" : "valid",
       processingFlags: validation.flags as Prisma.InputJsonValue,
       // Pre-calibration values, kept for audit. Only stored when the reading
@@ -101,7 +117,7 @@ export const createReading = async (input: ReadingInput) => {
       rawValues: rawReadings
         ? (rawReadings as Prisma.InputJsonValue)
         : undefined,
-    },
+    },  
   });
 
   // Create validation status records for flagged parameters
