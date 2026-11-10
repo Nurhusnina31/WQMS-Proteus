@@ -45,6 +45,16 @@ export interface TimeSeriesBucket {
   tss_avg?: number;
   temperature_avg?: number;
   depth_avg?: number;
+  pHmV_avg?: number;
+  turbidity_avg?: number;
+  TRYP_avg?: number;
+  CDOM_avg?: number;
+  ORP_avg?: number;
+  nh4_avg?: number;
+  HDO_avg?: number;
+  HDOpercent_avg?: number;
+  CDOMtemperature_avg?: number;
+  TRYPppb_avg?: number;
   count: number;
 }
 
@@ -91,7 +101,17 @@ export const getHourlyAverages = async (params: {
     | "bod"
     | "tss"
     | "temperature"
-    | "depth";
+    | "depth"
+    | "pHmV"
+    | "turbidity"
+    | "TRYP"
+    | "CDOM"
+    | "ORP"
+    | "nh4"
+    | "HDO"
+    | "HDOpercent"
+    | "CDOMtemperature"
+    | "TRYPppb";
 }) => {
   const response = await api.get("/sensors/readings/hourly-avg", { params });
   return response.data.data;

@@ -63,7 +63,16 @@ export interface ReportData {
     avgCod: number | null;
     avgBod: number | null;
     avgTss: number | null;
-    avgDepth: number | null;
+    avgDepth: number | null; 
+    avgTurbidity: number | null;
+    avgTRYP: number | null;
+    avgCDOM: number | null;
+    avgORP: number | null;
+    avgNh4: number | null;
+    avgHDO: number | null;
+    avgHDOpercent: number | null;
+    avgCDOMtemperature: number | null;
+    avgTRYPppb: number | null;
     availability: {
       [parameter: string]: number;
     };
@@ -96,6 +105,15 @@ const DEFAULT_PARAMETERS = [
   { key: "tss",         label: "TSS",          unit: "mg/L" },
   { key: "temperature", label: "Temperature",  unit: "°C"   },
   { key: "depth",       label: "Depth",        unit: "m"    },
+  { key: "turbidity",   label: "Turbidity",    unit: "NTU"  },
+  { key: "TRYP",        label: "TRYP",         unit: "mg/L" },  
+  { key: "CDOM",        label: "CDOM",         unit: "mg/L" },
+  { key: "ORP",         label: "ORP",          unit: "mV"   },
+  { key: "Nh4",         label: "NH₄⁺",         unit: "mg/L" },
+  { key: "HDO",         label: "HDO",          unit: "mg/L" },
+  { key: "HDOpercent",  label: "HDO%",         unit: "%"    },
+  { key: "CDOMtemperature", label: "CDOM Temperature", unit: "°C" },
+  { key: "TRYPppb",     label: "TRYP (ppb)",   unit: "ppb"  }
 ];
 
 /**
@@ -421,6 +439,15 @@ const calculateAvailability = (
     tss:         "tss_avg",
     temperature: "temperature_avg",
     depth:       "depth_avg",
+    turbidity:   "turbidity_avg",
+    TRYP:        "TRYP_avg",
+    CDOM:        "CDOM_avg",
+    ORP:         "ORP_avg",
+    nh4:         "nh4_avg",
+    HDO:         "HDO_avg",
+    HDOpercent:  "HDOpercent_avg",
+    CDOMtemperature: "CDOMtemperature_avg",
+    TRYPppb:     "TRYPppb_avg", 
   };
 
   console.log(
@@ -536,6 +563,15 @@ const calculateDataCounts = (
     tss:         "tss_avg",
     temperature: "temperature_avg",
     depth:       "depth_avg",
+    turbidity:   "turbidity_avg",
+    TRYP:        "TRYP_avg",
+    CDOM:        "CDOM_avg",
+    ORP:         "ORP_avg",
+    nh4:         "nh4_avg",
+    HDO:         "HDO_avg",
+    HDOpercent:  "HDOpercent_avg",
+    CDOMtemperature: "CDOMtemperature_avg",
+    TRYPppb:     "TRYPppb_avg",
   };
 
   const counts: ReportData["summary"]["dataCounts"] = {};
@@ -619,7 +655,16 @@ const calculateSummary = (
     avgCod: null,
     avgBod: null,
     avgTss: null,
-    avgDepth: null,
+    avgDepth: null,  
+    avgTurbidity: null,
+    avgTRYP: null,
+    avgCDOM: null,
+    avgORP: null,
+    avgNh4: null,
+    avgHDO: null,
+    avgHDOpercent: null,
+    avgCDOMtemperature: null,
+    avgTRYPppb: null, 
     availability,
     incompletePeriods,
     maintenanceExcluded: maintenanceBuckets,
@@ -653,7 +698,16 @@ const calculateSummary = (
   if (parameters.includes("bod"))   summary.avgBod   = avgOf("bod_avg");
   if (parameters.includes("tss"))   summary.avgTss   = avgOf("tss_avg");
   if (parameters.includes("depth")) summary.avgDepth = avgOf("depth_avg");
-
+  if (parameters.includes("turbidity")) summary.avgTurbidity = avgOf("turbidity_avg");
+  if (parameters.includes("TRYP"))  summary.avgTRYP  = avgOf("TRYP_avg");
+  if (parameters.includes("CDOM"))  summary.avgCDOM  = avgOf("CDOM_avg");
+  if (parameters.includes("ORP"))   summary.avgORP   = avgOf("ORP_avg");
+  if (parameters.includes("nh4"))   summary.avgNh4   = avgOf("nh4_avg");
+  if (parameters.includes("HDO"))   summary.avgHDO   = avgOf("HDO_avg");
+  if (parameters.includes("HDOpercent")) summary.avgHDOpercent = avgOf("HDOpercent_avg");
+  if (parameters.includes("CDOMtemperature")) summary.avgCDOMtemperature = avgOf("CDOMtemperature_avg");
+  if (parameters.includes("TRYPppb")) summary.avgTRYPppb = avgOf("TRYPppb_avg");
+  
   summary.maxTemp  = conv(summary.maxTemp, "temperature");
   summary.avgPh    = conv(summary.avgPh,   "ph");
   summary.avgDo    = conv(summary.avgDo,   "do");
@@ -662,6 +716,15 @@ const calculateSummary = (
   summary.avgBod   = conv(summary.avgBod,  "bod");
   summary.avgTss   = conv(summary.avgTss,  "tss");
   summary.avgDepth = conv(summary.avgDepth, "depth");
+  summary.avgTurbidity = conv(summary.avgTurbidity, "turbidity");
+  summary.avgTRYP  = conv(summary.avgTRYP,  "TRYP");
+  summary.avgCDOM  = conv(summary.avgCDOM,  "CDOM");
+  summary.avgORP   = conv(summary.avgORP,   "ORP");
+  summary.avgNh4   = conv(summary.avgNh4,   "nh4");
+  summary.avgHDO   = conv(summary.avgHDO,   "HDO");
+  summary.avgHDOpercent = conv(summary.avgHDOpercent, "HDOpercent");
+  summary.avgCDOMtemperature = conv(summary.avgCDOMtemperature, "CDOMtemperature");
+  summary.avgTRYPppb = conv(summary.avgTRYPppb, "TRYPppb");
 
   return summary;
 };

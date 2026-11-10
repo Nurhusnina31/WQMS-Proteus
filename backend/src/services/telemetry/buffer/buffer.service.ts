@@ -119,7 +119,7 @@ export const getMinuteBuffer = async (
       "HDOpercent",
       "CDOMtemperature",
       "TRYPppb",
-
+      
 
     ];
 

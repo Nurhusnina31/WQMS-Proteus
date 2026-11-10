@@ -52,6 +52,17 @@ const CHANNEL_MAP: Record<number, string> = {
   6: "tss", // Total Suspended Solids (mg/L)
   7: "temperature", // Water Temperature (°C)
   8: "depth", // Water Depth (m)
+  9:  "pressure", // Pressure (kPa)
+  10: "pHmV", // pH in millivolts
+  11: "turbidity", // Turbidity (NTU)
+  12: "TRYP", // TRYP (mg/L)
+  13: "CDOM", // CDOM (mg/L)
+  14: "ORP", // Oxidation-Reduction Potential (mV)
+  15: "nh4", // Ammonium NH₄⁺ (mg/L)
+  16: "HDO", // HDO (mg/L)
+  17: "HDOpercent", // HDO percentage (%)
+  18: "CDOMtemperature", // CDOM temperature (°C)
+  19: "TRYPppb", // TRYP in ppb 
 };
 
 // ─── Device Identifier Cache ────────────────────────────────────────────────

@@ -88,6 +88,9 @@ export interface WqiInputs {
   nh3n?: number | null; // mg/L
   tss?: number | null; // mg/L
   temperature?: number | null; // °C — needed to convert DO mg/L → % saturation
+  pressure?: number | null; // kPa — not used in WQI, but may be needed for DO conversion
+  depth?: number | null; // m — not used in WQI, but may be needed for DO conversion
+  
 }
 
 const isNum = (v: number | null | undefined): v is number =>
@@ -106,7 +109,10 @@ export const computeWQI = (i: WqiInputs): number | null => {
     !isNum(i.cod) ||
     !isNum(i.nh3n) ||
     !isNum(i.tss) ||
-    !isNum(i.temperature)
+    !isNum(i.temperature) ||
+    !isNum(i.pressure) ||
+    !isNum(i.depth) 
+    
   ) {
     return null;
   }

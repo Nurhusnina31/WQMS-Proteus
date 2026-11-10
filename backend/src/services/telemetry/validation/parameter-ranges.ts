@@ -22,6 +22,16 @@ export const INSTRUMENT_RANGES = {
   pressure: { min: 80, max: 120, unit: "kPa" },
   // Water depth: 0–50 m (standard submersible pressure transducer)
   depth: { min: 0, max: 50, unit: "m" },
+  pHmV: { min: -1000, max: 1000, unit: "mV" },
+  turbidity: { min: 0, max: 1000, unit: "NTU" },
+  TRYP: { min: 0, max: 100, unit: "mg/L" },
+  CDOM: { min: 0, max: 100, unit: "mg/L" },
+  ORP: { min: -500, max: 500, unit: "mV" },
+  nh4: { min: 0, max: 100, unit: "mg/L" },
+  HDO: { min: 0, max: 20, unit: "mg/L" },
+  HDOpercent: { min: 0, max: 200, unit: "%" },
+  CDOMtemperature: { min: 0, max: 50, unit: "°C" },
+  TRYPppb: { min: 0, max: 100000, unit: "ppb" },
 };
 
 /**

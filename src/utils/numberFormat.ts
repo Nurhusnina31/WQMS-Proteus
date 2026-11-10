@@ -33,6 +33,17 @@ const PARAMETER_DECIMALS: Record<string, number> = {
   tss:         1, // mg/L
   temperature: 1, // °C
   depth:       2, // m
+  pressure:    1, // kPa
+  pHmV:        1, // mV
+  turbidity:   1, // NTU
+  TRYP:        2, // mg/L
+  CDOM:        2, // mg/L
+  ORP:         1, // mV
+  nh4:         3, // mg/L
+  HDO:         2, // mg/L
+  HDOpercent:  1, // %
+  CDOMtemperature: 1, // °C
+  TRYPppb:     0, // ppb (whole number) 
 };
 
 /**

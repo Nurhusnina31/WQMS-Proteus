@@ -21,6 +21,16 @@ const BASE_UNITS: Record<string, string> = {
   temperature: "°C",
   pressure:    "kPa",
   depth:       "m",
+  pHmV:        "mV",
+  turbidity:   "NTU",
+  TRYP:        "mg/L",
+  CDOM:        "mg/L",
+  ORP:         "mV",
+  nh4:         "mg/L",
+  HDO:         "mg/L",
+  HDOpercent:  "%",
+  CDOMtemperature: "°C",
+  TRYPppb:     "ppb", 
 };
 
 /**

@@ -19,6 +19,16 @@ export const UNIT_OPTIONS: Record<string, string[]> = {
   tss:         ["mg/L"],
   temperature: ["°C", "°F"],
   depth:       ["m", "ft"],
+  pHmV:        ["mV"],
+  turbidity:   ["NTU"],
+  TRYP:        ["mg/L"],
+  CDOM:        ["mg/L"],
+  ORP:         ["mV"],
+  nh4:         ["mg/L"],
+  HDO:         ["mg/L"],
+  HDOpercent:  ["%"],
+  CDOMtemperature: ["°C"],
+  TRYPppb:     ["ppb"], 
 };
 
 // Default base units from backend
@@ -32,6 +42,16 @@ export const BASE_UNITS: Record<string, string> = {
   tss:         "mg/L",
   temperature: "°C",
   depth:       "m",
+  pHmV:        "mV",
+  turbidity:   "NTU",
+  TRYP:        "mg/L",
+  CDOM:        "mg/L",
+  ORP:         "mV",
+  nh4:         "mg/L",
+  HDO:         "mg/L",
+  HDOpercent:  "%",
+  CDOMtemperature: "°C",
+  TRYPppb:     "ppb",   
 };
 
 /**
